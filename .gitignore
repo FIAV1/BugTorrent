@@ -103,5 +103,18 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# pycharm
+# Pycharm
 .idea
+
+# Mac
+*.DS_Store
+
+# Local testing
+/test
+*.log
+
+# Local files
+/shared
+
+# Database
+*.db

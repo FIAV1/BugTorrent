@@ -1,4 +1,7 @@
-from utils import shell_colors as shell
+import os
+from utils import net_utils, shell_colors as shell
+from peer import peer
+from tracker import tracker
 
 shell.print_purple(	"__________", end="")
 shell.print_green(	"           ___________                                 __")
@@ -13,15 +16,19 @@ shell.print_green(	"|____| \____/|__|   |__|    \___  >___|  /__|")
 shell.print_purple(	"        \/     /_____/", end="")
 shell.print_green(	"                                 \/     \/")
 
+if not os.path.exists('shared'):
+	os.mkdir('shared')
+
+net_utils.prompt_parameters_request()
 
 choice = ''
 while choice != 'q':
-	choice = input('\nHi! Welcome to BugTorrent (q to exit): ')
+	choice = input('\nAre you a tracker? (y/n): ')
 	if choice == 'y':
-		print('u mom gay')
+		tracker.startup()
 		break
 	elif choice == 'n':
-		print('no u')
+		peer.startup()
 		break
 	else:
-		shell.print_red('Both ur moms r gay\n')
+		shell.print_red('Input code is wrong. Choose y or n!\n')

@@ -2,7 +2,9 @@
 
 from utils import net_utils, Logger, shell_colors as shell
 from .LocalData import LocalData
+from common.ServerThread import ServerThread
 from .handler import MenuHandler
+from .handler import UploadHandler
 from .Menu import Menu
 import socket
 
@@ -10,12 +12,9 @@ import socket
 def startup():
 
 	while True:
-		# controlla se c'è un tracker in memoria
-		if LocalData.tracker_is_empty():
-			# se non c'è richede indirizzo e porta
-			shell.print_blue('\nThis process will allow you to add a tracker.\n')
-			tracker = net_utils.prompt_friend_request()
-			LocalData.set_tracker(tracker)
+		shell.print_blue('\nThis process will allow you to add a tracker.\n')
+		tracker = net_utils.prompt_host_request('Insert a known host')
+		LocalData.set_tracker(tracker)
 
 		# tenta login
 		ip = net_utils.get_local_ip_for_response()
@@ -48,8 +47,6 @@ def startup():
 
 		except (socket.error, AttributeError):
 			shell.print_yellow(f'Unable to contact {tracker_ip4}|{tracker_ip6} [{tracker_port}]')
-			# pulisco il file json da file in sharing e tracker vecchio
-			LocalData.clear_backup_data()
 			if sock is not None:
 				sock.close()
 			continue
@@ -58,6 +55,8 @@ def startup():
 
 	log = Logger.Logger('peer/peer.log')
 
-	# TODO: aggiungere i vari server
+	server = ServerThread(net_utils.get_network_port(), UploadHandler.UploadHandler(log))
+	server.daemon = True
+	server.start()
 
 	Menu(MenuHandler.MenuHandler()).show()

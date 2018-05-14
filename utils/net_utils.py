@@ -189,14 +189,15 @@ def prompt_parameters_request() -> None:
 				continue
 
 
-def prompt_friend_request() -> tuple:
+def prompt_host_request(message: str) -> tuple:
 	""" Guide the user to manually insert peers in the data structure
 
-	:return: None
+	:param message: the message to be printed
+	:return: tuple containing the added host
 	"""
 
 	while True:
-		ip4 = input('Insert a known peer (IPv4): ')
+		ip4 = input(f'{message} (IPv4): ')
 		if ip4 == 'q':
 			break
 
@@ -208,7 +209,7 @@ def prompt_friend_request() -> tuple:
 		break
 
 	while True:
-		ip6 = input('Insert a known peer (IPv6): ')
+		ip6 = input(f'{message} (IPv6): ')
 		try:
 			ipaddress.IPv6Address(ip6)
 		except ipaddress.AddressValueError:
@@ -217,7 +218,7 @@ def prompt_friend_request() -> tuple:
 		break
 
 	while True:
-		port = input('Insert a known peer (port): ')
+		port = input(f'{message} (port): ')
 		try:
 			port = int(port)
 			if not 1024 < port < 65535:

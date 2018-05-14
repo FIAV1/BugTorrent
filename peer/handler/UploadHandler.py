@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 import socket
+import ipaddress
 from common.HandlerInterface import HandlerInterface
 from utils import Logger
-import ipaddress
 
 
 class UploadHandler(HandlerInterface):
@@ -28,12 +28,14 @@ class UploadHandler(HandlerInterface):
 
 		# log the packet received
 		socket_ip_sender = sd.getpeername()[0]
+
 		if ipaddress.IPv6Address(socket_ip_sender).ipv4_mapped is None:
 			socket_ip_sender = ipaddress.IPv6Address(socket_ip_sender).compressed
 		else:
 			socket_ip_sender = ipaddress.IPv6Address(socket_ip_sender).ipv4_mapped.compressed
 
 		socket_port_sender = sd.getpeername()[1]
+
 		self.log.write_green(f'{socket_ip_sender} [{socket_port_sender}] -> ', end='')
 		self.log.write(f'{packet}')
 
@@ -46,5 +48,4 @@ class UploadHandler(HandlerInterface):
 			sd.close()
 			self.log.write_red(f'Invalid packet received from {socket_ip_sender} [{socket_port_sender}]: ', end='')
 			self.log.write(f'{packet}')
-
 		return

@@ -2,17 +2,13 @@
 
 import sqlite3
 from sqlite3 import Error
-from sqlite3 import DatabaseError
 import os.path
 
 
 def exist(db_filename: str) -> bool:
 	""" Check if the given db exist
-
-	Parameters:
-		db_filename: the db filename
-	Returns:
-		bool - True or False either if exists or not
+	:param db_filename: the db filename
+	:return: bool - True or False either if exists or not
 	"""
 	if os.path.exists(db_filename):
 		return True
@@ -21,19 +17,16 @@ def exist(db_filename: str) -> bool:
 
 def create_database(db_filename: str) -> None:
 	""" Create a sqlite db file with the structure defined in the 'schema.sql' file
-
-	Parameters:
-		db_filename: the db filename
+	:param: db_filename: the db filename
 	"""
 	try:
 		db_file = open(db_filename, "w+")
-		sqlscript = open('superpeer/database/schema.sql', 'r')
+		sqlscript = open('tracker/database/schema.sql', 'r')
 	except IOError as e:
 		print(e)
 		exit(0)
 
 	if db_file is not None and sqlscript is not None:
-
 		# create a database connection
 		conn = get_connection(db_filename)
 
@@ -56,14 +49,11 @@ def create_database(db_filename: str) -> None:
 
 def reset_database(db_filename: str) -> bool:
 	""" Refresh the tables of the database
-
-	Parameters:
-		db_filename: the db filename
-	Returns:
-		bool - True or False either if succeeds or fails
+	:param db_filename: the db filename
+	:return bool - True or False either if succeeds or fails
 	"""
 	try:
-		sqlscript = open('superpeer/database/reset.sql', 'r')
+		sqlscript = open('tracker/database/reset.sql', 'r')
 	except IOError as e:
 		print(e)
 		exit(0)
@@ -87,10 +77,13 @@ def reset_database(db_filename: str) -> bool:
 
 
 def fill_seeds(db_filename: str) -> bool:
-
+	""" Refresh the tables of the database
+	:param db_filename: the db filename
+	:return bool - True or False either if succeeds or fails
+	"""
 	try:
-		reset_script = open('superpeer/database/reset.sql', 'r')
-		seeds_script = open('superpeer/database/seeds.sql', 'r')
+		reset_script = open('tracker/database/reset.sql', 'r')
+		seeds_script = open('tracker/database/seeds.sql', 'r')
 	except IOError as e:
 		print(e)
 		exit(0)
@@ -114,12 +107,9 @@ def fill_seeds(db_filename: str) -> bool:
 
 
 def get_connection(db_filename: str) -> sqlite3.Connection:
-	""" create a database connection to the given SQLite database
-
-	Parameters:
-		db_filename: the db filename
-	Returns:
-		Connection - Connection object or None
+	""" Create a database connection to the given SQLite database
+	:param db_filename: the db filename
+	:return Connection - Connection object or None
 	"""
 	try:
 		return sqlite3.connect(db_filename)

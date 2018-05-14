@@ -1,20 +1,9 @@
 #!/usr/bin/env python
 
 import socket
-from threading import Timer
 from common.HandlerInterface import HandlerInterface
-from superpeer.LocalData import LocalData
-from utils import Logger, net_utils
+from utils import Logger
 import ipaddress
-import uuid
-from superpeer.database import database
-from superpeer.model.Peer import Peer
-from superpeer.model.File import File
-from superpeer.model import peer_repository
-from superpeer.model import file_repository
-from common.ServerThread import ServerThread
-from .NetworkTimedResponseHandler import NetworkTimedResponseHandler
-from utils.Uploader import Uploader
 
 
 class NetworkHandler(HandlerInterface):
@@ -22,61 +11,6 @@ class NetworkHandler(HandlerInterface):
 	def __init__(self, db_file: str, log: Logger.Logger):
 		self.db_file = db_file
 		self.log = log
-
-	def __delete_packet(self, pktid: str) -> None:
-		""" Delete a packet received from the net
-
-		:param pktid: id of the packet
-		:return: None
-		"""
-		if LocalData.exist_in_received_packets(pktid):
-			LocalData.delete_received_packet(pktid)
-
-	def __forward_packet(self, ip_sender: str, ip_source: str, ttl: str, packet: str) -> None:
-		""" Forward a packet in the net to neighbours
-
-		:param ip_sender: ip address of sender host
-		:param ttl: packet time to live
-		:param packet: string representing the packet
-		:return: None
-		"""
-		new_ttl = int(ttl) - 1
-
-		if new_ttl > 0:
-			ip4_peer, ip6_peer = net_utils.get_ip_pair(ip_source)
-
-			# get the recipients list without the peer who sent the packet and the peer who forwarded it
-			recipients = LocalData.get_super_friends_recipients(ip_sender, ip4_peer, ip6_peer)
-
-			packet = packet[:80] + str(new_ttl).zfill(2) + packet[82:]
-
-			for superfriend in recipients:
-				ip4 = LocalData.get_super_friend_ip4(superfriend)
-				ip6 = LocalData.get_super_friend_ip6(superfriend)
-				port = LocalData.get_super_friend_port(superfriend)
-				try:
-					net_utils.send_packet_and_close(ip4, ip6, port, packet)
-					self.log.write_blue(f'Forwarding to {ip4}|{ip6} [{port}] -> ', end='')
-					self.log.write(f'{packet}')
-				except socket.error as e:
-					self.log.write_red(f'Unable to forward a packet to {ip4}|{ip6} [{port}]: {e}')
-
-	def __broadcast_packet(self, packet: str) -> None:
-		""" Send the packet to a pool of hosts
-		:param packet: packet to be broadcasted
-		:return: None
-		"""
-
-		for superfriend in LocalData.get_super_friends():
-			ip4 = LocalData.get_super_friend_ip4(superfriend)
-			ip6 = LocalData.get_super_friend_ip6(superfriend)
-			port = LocalData.get_super_friend_port(superfriend)
-			try:
-				net_utils.send_packet_and_close(ip4, ip6, port, packet)
-				self.log.write_blue(f'Broadcasting to {ip4}|{ip6} [{port}] -> ', end='')
-				self.log.write(f'{packet}')
-			except socket.error as e:
-				self.log.write_red(f'Unable to broadcast a packet to {ip4}|{ip6} [{port}]: {e}')
 
 	def serve(self, sd: socket.socket) -> None:
 		""" Handle a network packet

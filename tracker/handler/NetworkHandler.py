@@ -1,20 +1,9 @@
 #!/usr/bin/env python
 
 import socket
-from threading import Timer
 from common.HandlerInterface import HandlerInterface
-from superpeer.LocalData import LocalData
 from utils import Logger, net_utils
 import ipaddress
-import uuid
-from superpeer.database import database
-from superpeer.model.Peer import Peer
-from superpeer.model.File import File
-from superpeer.model import peer_repository
-from superpeer.model import file_repository
-from common.ServerThread import ServerThread
-from .NetworkTimedResponseHandler import NetworkTimedResponseHandler
-from utils.Uploader import Uploader
 
 
 class NetworkHandler(HandlerInterface):

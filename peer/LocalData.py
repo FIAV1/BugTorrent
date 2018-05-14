@@ -23,6 +23,7 @@ class LocalData:
 	def get_tracker_ip4(cls) -> str:
 		return cls.tracker[0]
 
+	@classmethod
 	def get_tracker_ip6(cls) -> str:
 		return cls.tracker[1]
 

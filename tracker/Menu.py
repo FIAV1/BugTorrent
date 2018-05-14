@@ -18,31 +18,19 @@ class Menu:
 		choice = ''
 		while choice != 'q':
 			print('\n- Main Menù ----------------------------')
-			print('| <1> Search a file to download          |')
-			print('| <2> Search other superpeers around you |')
-			print('| <3> Add a file                         |')
-			print('| <4> Delete a file                      |')
-			print('| <5> List your known superpeers         |')
-			print('| <6> List your known peers              |')
-			print('| <7> List all files                     |')
+			print('| <1> List files              |')
+			print('| <2> List peer\'s file parts |')
+			print('| <3> List logged peers       |')
 			print('------------------------------------------')
 			choice = input('Select an option (q to exit): ')
 
-			if choice in {'1', '2', '3', '4', '5', '6', '7'}:
+			if choice in {'1', '2', '3'}:
 				if choice == '1':
-					command = "QUER"
+					command = ""
 				elif choice == '2':
-					command = "SUPE"
+					command = ""
 				elif choice == '3':
-					command = "ADFF"
-				elif choice == '4':
-					command = "DEFF"
-				elif choice == '5':
-					command = "LISTSUPERPEERS"
-				elif choice == '6':
-					command = "LISTPEERS"
-				elif choice == '7':
-					command = "LISTFILES"
+					command = ""
 
 				self.handler.serve(command)
 			elif choice != 'q':

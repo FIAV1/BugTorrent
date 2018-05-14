@@ -48,6 +48,8 @@ class Downloader:
 
 		return sock
 
+	# TODO: aggiungere metodi per gestione temporizzazione
+
 	def start(self) -> None:
 		""" Start file download
 

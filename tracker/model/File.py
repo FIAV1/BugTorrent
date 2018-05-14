@@ -5,10 +5,11 @@ from superpeer.database import database
 
 class File:
 
-	def __init__(self, file_md5, file_name, download_count):
+	def __init__(self, session_id, file_md5, file_name, file_parts):
+		self.session_id = session_id
 		self.file_md5 = file_md5
 		self.file_name = file_name
-		self.download_count = download_count
+		self.file_parts = file_parts
 
 	def insert(self, conn: database.sqlite3.Connection) -> None:
 		""" Insert the file into the db

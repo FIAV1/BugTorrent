@@ -16,12 +16,12 @@ shell.print_green(	"                                 \/     \/")
 
 choice = ''
 while choice != 'q':
-	choice = input('\nAre you a super peer? (y/n): ')
+	choice = input('\nHi! Welcome to BugTorrent (q to exit): ')
 	if choice == 'y':
-		print('superpeer')
+		print('u mom gay')
 		break
 	elif choice == 'n':
-		print('peer')
+		print('no u')
 		break
 	else:
-		shell.print_red('Input code is wrong. Choose y or n!\n')
+		shell.print_red('Both ur moms r gay\n')

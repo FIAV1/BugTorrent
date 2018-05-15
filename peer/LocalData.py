@@ -23,6 +23,17 @@ class LocalData:
 		cls.tracker = tracker
 
 	@classmethod
+	def clear_tracker(cls) -> None:
+		cls.tracker = tuple()
+
+	@classmethod
+	def tracker_is_empty(cls) -> bool:
+		if len(cls.get_tracker_ip4()) == 0 and len(cls.get_tracker_ip6()) == 0:
+			return True
+		else:
+			return False
+
+	@classmethod
 	def get_tracker_ip4(cls) -> str:
 		return cls.tracker[0]
 
@@ -67,4 +78,8 @@ class LocalData:
 	@classmethod
 	def get_shared_file_name(cls, file: tuple) -> str:
 		return file[1]
+
+	@classmethod
+	def clear_shared_files(cls) -> None:
+		cls.shared_files.clear()
 # ---------------------------------------------------------------------------------

@@ -2,6 +2,8 @@
 
 from peer.handler import MenuHandler
 from utils import shell_colors
+from peer.LocalData import LocalData
+
 
 
 class Menu:
@@ -30,8 +32,16 @@ class Menu:
 					command = 'ADDR'
 
 				self.handler.serve(command)
+
+			if choice == 'q':
+
+				self.handler.serve('LOGO')
+				if LocalData.tracker_is_empty():
+					break
+				else:
+					continue
+
 			elif choice != 'q':
 				shell_colors.print_red('Input code is wrong. Choose one action!\n')
 
-		self.handler.serve('LOGO')
 		shell_colors.print_blue('\nBye!\n')

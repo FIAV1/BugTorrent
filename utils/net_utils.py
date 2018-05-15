@@ -12,7 +12,8 @@ config = {
 	'ipv6': 'fc00::1:1',
 	'network_port': 3000,
 	'aque_port': 4000,
-	'asup_port': 5000
+	'asup_port': 5000,
+	'part_size': 262144
 }
 
 
@@ -132,6 +133,10 @@ def set_local_ipv6(ipv6: str) -> str:
 
 def get_network_port() -> int:
 	return config['network_port']
+
+
+def get_part_size() -> int:
+	return config['part_size']
 
 
 def get_aque_port() -> int:

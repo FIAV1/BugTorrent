@@ -11,7 +11,17 @@ DROP TABLE IF EXISTS files;
 CREATE TABLE files (
     file_md5 char(32) PRIMARY KEY,
     file_name char(100) NOT NULL,
+    len_file int NOT NULL,
+    len_part int NOT NULL,
+);
+
+DROP TABLE IF EXISTS files_peers;
+CREATE TABLE files_peers (
+    file_md5 char(32) NOT NULL,
     session_id char(16) NOT NULL,
     part_list bytes NOT NULL,
+    source int(1) NOT NULL,
+    PRIMARY KEY (file_md5, session_id),
+    FOREIGN KEY (file_md5) REFERENCES files (file_md5) ON DELETE CASCADE,
     FOREIGN KEY (session_id) REFERENCES peers (session_id) ON DELETE CASCADE
 );

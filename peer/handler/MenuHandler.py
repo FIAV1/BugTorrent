@@ -26,7 +26,110 @@ class MenuHandler:
 		ssid = LocalData.get_session_id()
 
 		if choice == "LOOK":
-			pass
+			while True:
+				search = input('\nInsert file\'s name (q to cancel): ')
+
+				if search == "q":
+					print('\n')
+					return
+
+				if not 0 < len(search) <= 20:
+					shell.print_red('\nQuery string must be a valid value (1 - 20 chars).')
+					continue
+
+				break
+
+			packet = choice + ssid + search.ljust(20)
+
+			sd = None
+			try:
+				sd = net_utils.send_packet(tracker_ip4, tracker_ip6, tracker_port, packet)
+			except (net_utils.socket.error, AttributeError):
+				shell.print_red(
+					f'\nError while sending the request to the tracker: {tracker_ip4}|{tracker_ip6} [{tracker_port}].\n')
+				sd.close()
+				return
+
+			try:
+				command = sd.recv(4).decode()
+			except (net_utils.socket.error, AttributeError) as e:
+				shell.print_red(f'Unable to read the command from the socket: {e}\n')
+				sd.close()
+				return
+
+			if command != 'ALOO':
+				shell.print_red(f'\nReceived a packet with a wrong command ({command}).')
+				return
+
+			try:
+				num_files = int(sd.recv(3).decode())
+			except (net_utils.socket.error, AttributeError) as e:
+				shell.print_red(f'Unable to read the command from the socket: {e}\n')
+				sd.close()
+				return
+
+			# check for file matching the keyword
+			if num_files == 0:
+				shell.print_yellow(f'{search} not found.\n')
+				sd.close()
+				return
+
+			downloadables = list()
+
+			for i in range(num_files):
+
+				try:
+					file_md5 = sd.recv(32).decode()
+					file_name = sd.recv(100).decode().lstrip().rstrip()
+					len_file = int(sd.recv(10))
+					len_part = int(sd.recv(6))
+				except net_utils.sd.error:
+					shell.print_red('\nError while receiving the response from the tracker.\n')
+					continue
+				except ValueError:
+					shell.print_red('\nInvalid packet from tracker.\n')
+					continue
+
+				downloadables.append((file_md5, file_name, len_file, len_part))
+
+			if not downloadables:
+				shell.print_red(f'\nSomething went wrong while retrieving {search}\n')
+				sd.close()
+				return
+
+			shell.print_green(f'\nFiles found:')
+			for count, downloadable in enumerate(downloadables, 1):
+				print(f'{count}] {LocalData.get_downloadable_file_name(downloadable)} | ', end='')
+				shell.print_yellow(f'{LocalData.get_downloadable_file_md5(downloadable)}')
+
+			while True:
+				file_index = input('Choose a file to download (q to cancel): ')
+
+				if file_index == "q":
+					print('\n')
+					sd.close()
+					return
+
+				try:
+					file_index = int(file_index) - 1
+				except ValueError:
+					shell.print_red(f'\nWrong index: number in range 1 - {len(downloadables)} expected\n')
+					continue
+
+				if not 0 <= file_index <= len(downloadables) - 1:
+					shell.print_red(f'\nWrong index: number in range 1 - {len(downloadables)} expected\n')
+					continue
+				else:
+					choosed_file_md5 = LocalData.get_downloadable_file_md5(downloadables[file_index])
+					choosed_file_name = LocalData.get_downloadable_file_name(downloadables[file_index])
+					choosed_file_lenght = LocalData.get_downloadable_file_length(downloadables[file_index])
+					choosed_file_part_lenght = LocalData.get_downloadable_file_part_length(downloadables[file_index])
+
+				try:
+					Downloader(choosed_file_md5, choosed_file_name, choosed_file_lenght, choosed_file_part_lenght).start()
+				except OSError:
+					shell.print_red(f'\nError while downloading {choosed_file_name}.\n')
+				break
 
 		elif choice == "ADDR":
 			# check if shared directory exist
@@ -48,21 +151,21 @@ class MenuHandler:
 				temp_files.append((file_md5, file.name))
 
 			while True:
-				index = input('Choose a file to share (q to cancel): ')
+				file_index = input('Choose a file to share (q to cancel): ')
 
-				if index == "q":
+				if file_index == "q":
 					print('\n')
 					return
 
 				try:
-					index = int(index) - 1
+					file_index = int(file_index) - 1
 				except ValueError:
 					shell.print_red(f'\nWrong index: number in range 1 - {len(temp_files)} expected\n')
 					continue
 
-				if 0 <= index <= len(temp_files):
-					file_name = LocalData.get_shared_file_name(temp_files[index])
-					file_md5 = LocalData.get_shared_file_md5(temp_files[index])
+				if 0 <= file_index <= len(temp_files) - 1:
+					file_name = LocalData.get_shared_file_name(temp_files[file_index])
+					file_md5 = LocalData.get_shared_file_md5(temp_files[file_index])
 
 					# check if file is already in sharing
 					if not LocalData.is_shared_file(file_md5, file_name):
@@ -87,14 +190,15 @@ class MenuHandler:
 						sd = None
 						try:
 							sd = net_utils.send_packet(tracker_ip4, tracker_ip6, tracker_port, packet)
-							shell.print_green(f'Packet sent to tracker: {tracker_ip4}|{tracker_ip6} [{tracker_port}]')
-						except net_utils.socket.error:
-							shell.print_red(f'\nError while sending packet to tracker: {tracker_ip4}|{tracker_ip6} [{tracker_port}]\n')
+						except (net_utils.socket.error, AttributeError):
+							shell.print_red(
+								f'\nError while sending the request to the tracker: {tracker_ip4}|{tracker_ip6} [{tracker_port}].\n')
 							sd.close()
+							return
 
 						try:
 							response = sd.recv(200).decode()
-						except socket.error as e:
+						except (net_utils.socket.error, AttributeError) as e:
 							shell.print_red(f'Unable to read the response from the socket: {e}\n')
 							sd.close()
 							return
@@ -108,7 +212,7 @@ class MenuHandler:
 						command = response[0:4]
 
 						if command != 'AADR':
-							shell.print_red(f"\nInvalid response: {command} -> {response}\n")
+							shell.print_red(f'\nReceived a packet with a wrong command ({command}).')
 							return
 
 						# TODO l'utilizzo di questa num part al momento mi sfugge, quindi la lascio qui pendente in attesa di sviluppi
@@ -130,14 +234,22 @@ class MenuHandler:
 		elif choice == "LOGO":
 			packet = choice + ssid
 
-			sd = net_utils.send_packet(tracker_ip4, tracker_ip6, tracker_port, packet)
+			sd = None
+			try:
+				sd = net_utils.send_packet(tracker_ip4, tracker_ip6, tracker_port, packet)
+			except (net_utils.socket.error, AttributeError):
+				shell.print_red(
+					f'\nError while sending the request to the tracker: {tracker_ip4}|{tracker_ip6} [{tracker_port}].\n')
+				sd.close()
+				return
 
 			try:
 				response = sd.recv(50).decode()
-			except socket.error as e:
+			except (net_utils.socket.error, AttributeError) as e:
 				shell.print_red(f'Unable to read the response from the socket: {e}\n')
 				sd.close()
 				return
+
 			sd.close()
 
 			if len(response) != 14:
@@ -158,7 +270,7 @@ class MenuHandler:
 				shell.print_yellow(f'\nUnable to logout:\nYou have {part_down} parts not shared with other peer.\n')
 
 			else:
-				shell.print_red(f'\nError while receiving the response for "{choice}".')
+				shell.print_red(f'\nReceived a packet with a wrong command ({command}).')
 				shell.print_red(f'Received from the socket: {command} -> {response}')
 
 		else:

@@ -83,3 +83,25 @@ class LocalData:
 	def clear_shared_files(cls) -> None:
 		cls.shared_files.clear()
 # ---------------------------------------------------------------------------------
+
+# downloadables_file management ----------------------------------------------------
+	# downloadables is the list of file received from the tracker in MenuHandler.
+	# (file_md5, file_name, len_file, len_part)
+	# the following method are used to improve the readability of the code in MenuHandler and in Downloader
+
+	@classmethod
+	def get_downloadable_file_md5(cls, file: tuple) -> str:
+		return file[0]
+
+	@classmethod
+	def get_downloadable_file_name(cls, file: tuple) -> str:
+		return file[1]
+
+	@classmethod
+	def get_downloadable_file_length(cls, file: tuple) -> int:
+		return int(file[2])
+
+	@classmethod
+	def get_downloadable_file_part_length(cls, file: tuple) -> int:
+		return int(file[3])
+# ---------------------------------------------------------------------------------

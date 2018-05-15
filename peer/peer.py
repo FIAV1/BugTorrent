@@ -59,4 +59,4 @@ def startup():
 	server.daemon = True
 	server.start()
 
-	Menu(MenuHandler.MenuHandler()).show()
+	Menu(MenuHandler.MenuHandler(), server).show()

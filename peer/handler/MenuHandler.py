@@ -83,7 +83,7 @@ class MenuHandler:
 					file_name = sd.recv(100).decode().lstrip().rstrip()
 					len_file = int(sd.recv(10))
 					len_part = int(sd.recv(6))
-				except net_utils.sd.error:
+				except net_utils.socket.error:
 					shell.print_red('\nError while receiving the response from the tracker.\n')
 					continue
 				except ValueError:
@@ -92,9 +92,10 @@ class MenuHandler:
 
 				downloadables.append((file_md5, file_name, len_file, len_part))
 
+			sd.close()
+
 			if not downloadables:
 				shell.print_red(f'\nSomething went wrong while retrieving {search}\n')
-				sd.close()
 				return
 
 			shell.print_green(f'\nFiles found:')
@@ -107,7 +108,6 @@ class MenuHandler:
 
 				if file_index == "q":
 					print('\n')
-					sd.close()
 					return
 
 				try:

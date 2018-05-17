@@ -153,6 +153,21 @@ def get_all_part_lists_by_file_excluding_owner(conn: database.sqlite3.Connection
 	return part_list_rows
 
 
+def get_part_list_by_file_and_owner(conn: database.sqlite3.Connection, file_md5: str, session_id: str) -> tuple:
+	""" Get all the indicated file's part list present in the network, excluding the owner's part list
+	:param conn - the db connection
+	:param file_md5 - the md5 of the file
+	:param session_id - the session id of the owner
+	:return list - the list of part_list
+	"""
+	c = conn.cursor()
+	c.execute('SELECT part_list FROM files_peers WHERE file_md5=? AND session_id=?', (file_md5, session_id))
+
+	row = c.fetchone()
+
+	return row['part_list']
+
+
 def get_peer_part_lists(conn: database.sqlite3.Connection, session_id: str):
 	""" Get all the file's part list owned by the peer
 	:param conn - the db connection

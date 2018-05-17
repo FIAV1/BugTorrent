@@ -37,6 +37,8 @@ class NetworkHandler(HandlerInterface):
 			self.log.write_red('Unauthorized request received: SessionID is invalid')
 			return
 
+		return peer
+
 	def serve(self, sd: socket.socket) -> None:
 		""" Handle a network packet
 		:param sd: the socket descriptor used for read the packet
@@ -118,10 +120,10 @@ class NetworkHandler(HandlerInterface):
 				return
 
 			session_id = packet[4:20]
-			len_file = packet[20:30]
-			len_part = packet[30:36]
-			md5 = packet[36:68]
-			name = packet[68:168].lstrip().rstrip().lower()
+			len_file = int(packet[20:30])
+			len_part = int(packet[30:36])
+			name = packet[36:136].lstrip().rstrip().lower()
+			md5 = packet[136:168]
 
 			try:
 				conn = database.get_connection(self.db_file)
@@ -143,8 +145,12 @@ class NetworkHandler(HandlerInterface):
 					num_part = int(math.ceil(len_file / len_part))
 					part_list_length = int(math.ceil(num_part/8))
 					part_list = bytearray(part_list_length)
-					for i in range(part_list_length):
+
+					for i in range(part_list_length - 1):
 						part_list[i] = 255
+					for i in range(num_part % 8):
+						part_list[part_list_length - 1] |= pow(2, 7-i)
+
 					file_repository.add_owner(conn, md5, session_id, part_list, 1)
 				else:
 					# the peer already added the file in the past, so i just need to rename it
@@ -192,7 +198,7 @@ class NetworkHandler(HandlerInterface):
 				return
 
 			try:
-				self.check_peer_authentication(conn, session_id, sd)
+				peer = self.check_peer_authentication(conn, session_id, sd)
 
 				# logout permission check
 				peer_files = file_repository.get_peer_files(conn, session_id, 1)
@@ -206,15 +212,16 @@ class NetworkHandler(HandlerInterface):
 					part_list_length = int(math.ceil(num_part / 8))
 
 					part_list_rows = file_repository.get_all_part_lists_by_file_excluding_owner(conn, file_md5, session_id)
+					owner_part_list = file_repository.get_part_list_by_file_and_owner(conn, file_md5, session_id)
 					part_list_element_mask = 0
 
 					for i in range(part_list_length):
 						# i help us get every i-th item of every part lists
-						for part_list in part_list_rows:
-							part_list = bytearray(part_list)
+						for part_list_row in part_list_rows:
+							part_list = bytearray(part_list_row['part_list'])
 							part_list_element_mask |= part_list[i]
 
-						if part_list_element_mask != 255:
+						if part_list_element_mask != owner_part_list[i]:
 							can_logout = False
 							break
 
@@ -228,9 +235,11 @@ class NetworkHandler(HandlerInterface):
 					num_part_own = 0
 					# get all the parts owned by the peer
 					part_list_rows = file_repository.get_peer_part_lists(conn, session_id)
-					for part_list in part_list_rows:
-						num_part_own += binary_utils.count_set_bits(int.from_bytes(part_list, 'big'))
+					for part_list_row in part_list_rows:
+						num_part_own += binary_utils.count_set_bits(int.from_bytes(part_list_row['part_list'], 'big'))
+
 					file_repository.delete_peer_files(conn, session_id)
+					peer.delete(conn)
 
 					response = "ALOG" + str(num_part_own).zfill(10)
 				else:
@@ -249,8 +258,8 @@ class NetworkHandler(HandlerInterface):
 
 						for i in range(part_list_length):
 							# i help us get every i-th item of every part lists
-							for part_list in part_list_rows:
-								part_list = bytearray(part_list)
+							for part_list_row in part_list_rows:
+								part_list = bytearray(part_list_row['part_list'])
 								part_list_element_mask |= part_list[i]
 
 							num_part_down += binary_utils.count_set_bits(part_list_element_mask)

@@ -11,8 +11,8 @@ DROP TABLE IF EXISTS files;
 CREATE TABLE files (
     file_md5 char(32) PRIMARY KEY,
     file_name char(100) NOT NULL,
-    len_file int NOT NULL,
-    len_part int NOT NULL,
+    len_file int(10) NOT NULL,
+    len_part int(10) NOT NULL
 );
 
 DROP TABLE IF EXISTS files_peers;

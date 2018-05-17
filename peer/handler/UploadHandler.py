@@ -4,12 +4,23 @@ import socket
 import ipaddress
 from common.HandlerInterface import HandlerInterface
 from utils import Logger
+from peer.LocalData import LocalData
+from peer.utils.Uploader import Uploader
 
 
 class UploadHandler(HandlerInterface):
 
 	def __init__(self, log: Logger.Logger):
 		self.log = log
+
+	def send_packet(self, sd: socket.socket, ip: str, port: int, packet: str):
+		try:
+			sd.send(packet.encode())
+			sd.close()
+			self.log.write_blue(f'Sending to {ip} [{port}] -> ', end='')
+			self.log.write(f'{packet}')
+		except socket.error as e:
+			self.log.write_red(f'An error has occurred while sending {packet} to {ip} [{port}]: {e}')
 
 	def serve(self, sd: socket.socket) -> None:
 		""" Handle a network packet
@@ -41,7 +52,44 @@ class UploadHandler(HandlerInterface):
 		command = packet[:4]
 
 		if command == "RETP":
-			pass
+
+			if len(packet) != 44:
+				self.log.write_red(f'Invalid packet received: {packet}')
+				self.send_packet(sd, socket_ip_sender, socket_port_sender, error_response)
+				return
+
+			file_md5 = packet[4:36]
+			num_part = packet[36:44]
+
+			file_name = LocalData.get_shared_file_name_from_md5(file_md5)
+
+			if file_name is None:
+				self.log.write_blue('Sending -> ', end='')
+				self.log.write('Sorry, the requested file is not available anymore.')
+				sd.send('Sorry, the requested file is not available anymore.'.encode())
+				sd.close()
+				return
+
+			try:
+				f_obj = open('shared/' + file_name, 'rb')
+			except OSError as e:
+				self.log.write_red(f'Cannot open the file to upload: {e}')
+				self.log.write_blue('Sending -> ', end='')
+				self.log.write('Sorry, the peer encountered a problem while uploading the file.')
+				sd.send('Sorry, the peer encountered a problem while uploading the file.'.encode())
+				sd.close()
+				return
+
+			try:
+				Uploader(sd, f_obj, num_part, self.log).start()
+				self.log.write_blue(f'Sent {sd.getpeername()[0]} [{sd.getpeername()[1]}] -> ', end='')
+				self.log.write(f'{file_name}')
+				sd.close()
+
+			except OSError as e:
+				self.log.write_red(f'Error while sending the file: {e}')
+				sd.close()
+				return
 
 		else:
 			sd.close()

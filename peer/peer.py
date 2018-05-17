@@ -13,9 +13,9 @@ def startup():
 
 	while True:
 		shell.print_blue('\nThis process will allow you to add a tracker.\n')
-		# tracker = net_utils.prompt_host_request('Insert a known host')
-		# LocalData.set_tracker(tracker)
-		LocalData.set_tracker(('172.16.1.1', 'fc00::1:1', 3000))
+		tracker = net_utils.prompt_host_request('Insert a known host')
+		LocalData.set_tracker(tracker)
+		# LocalData.set_tracker(('172.16.1.', 'fc00::1:', 3000))
 
 		# tenta login
 		ip = net_utils.get_local_ip_for_response()

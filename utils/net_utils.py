@@ -7,8 +7,8 @@ import random
 from utils import shell_colors
 
 config = {
-	'ipv4': '172.16.1.3',
-	'ipv6': 'fc00::1:3',
+	'ipv4': '172.16.1.',
+	'ipv6': 'fc00::1:',
 	'network_port': 3000,
 	'part_size': 262144
 }

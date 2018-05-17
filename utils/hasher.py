@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import hashlib
+import utils.net_utils as net_utils
 
 
 def get_md5(file_path: str) -> str:
@@ -29,5 +30,6 @@ def get_md5(file_path: str) -> str:
 	with open(file_path, "rb") as f:
 		for block in iter(lambda: f.read(4096), b''):
 			m.update(block)
+		m.update(net_utils.get_local_ipv4().encode() + net_utils.get_local_ipv6().encode())
 
 	return m.hexdigest()

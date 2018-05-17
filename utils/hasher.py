@@ -25,7 +25,6 @@ def get_md5(file_path: str) -> str:
 	:return: None
 	"""
 
-	# TODO: modificare l'hashing aggiungendo ip del peer
 	m = hashlib.md5()
 	with open(file_path, "rb") as f:
 		for block in iter(lambda: f.read(4096), b''):

@@ -3,7 +3,7 @@
 import socket
 import random
 from utils import shell_colors
-from utils import progress_bar
+from peer.utils import progress_bar
 
 
 class Downloader:

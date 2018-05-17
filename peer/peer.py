@@ -15,6 +15,7 @@ def startup():
 		shell.print_blue('\nThis process will allow you to add a tracker.\n')
 		tracker = net_utils.prompt_host_request('Insert a known host')
 		LocalData.set_tracker(tracker)
+		# LocalData.set_tracker(('172.16.1.', 'fc00::1:', 3000))
 
 		# tenta login
 		ip = net_utils.get_local_ip_for_response()
@@ -59,4 +60,4 @@ def startup():
 	server.daemon = True
 	server.start()
 
-	Menu(MenuHandler.MenuHandler()).show()
+	Menu(MenuHandler.MenuHandler(), server).show()

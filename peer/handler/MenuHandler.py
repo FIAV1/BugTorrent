@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 
-
 from utils import hasher, net_utils
 from peer.LocalData import LocalData
 from utils import shell_colors as shell
-from utils.Downloader import Downloader
+from peer.utils.Downloader import Downloader
 import os
-import io
-import socket
 
 
 class MenuHandler:
@@ -44,15 +41,17 @@ class MenuHandler:
 			sd = None
 			try:
 				sd = net_utils.send_packet(tracker_ip4, tracker_ip6, tracker_port, packet)
-			except (net_utils.socket.error, AttributeError):
+			except net_utils.socket.error as e:
 				shell.print_red(
-					f'\nError while sending the request to the tracker: {tracker_ip4}|{tracker_ip6} [{tracker_port}].\n')
-				sd.close()
+					f'\nError while sending the request to the tracker: {tracker_ip4}|{tracker_ip6} [{tracker_port}].')
+				shell.print_red(f'Error: {e}')
+				if sd is not None:
+					sd.close()
 				return
 
 			try:
 				command = sd.recv(4).decode()
-			except (net_utils.socket.error, AttributeError) as e:
+			except net_utils.socket.error as e:
 				shell.print_red(f'Unable to read the command from the socket: {e}\n')
 				sd.close()
 				return
@@ -63,7 +62,7 @@ class MenuHandler:
 
 			try:
 				num_files = int(sd.recv(3).decode())
-			except (net_utils.socket.error, AttributeError) as e:
+			except net_utils.socket.error as e:
 				shell.print_red(f'Unable to read the command from the socket: {e}\n')
 				sd.close()
 				return
@@ -83,11 +82,11 @@ class MenuHandler:
 					file_name = sd.recv(100).decode().lstrip().rstrip()
 					len_file = int(sd.recv(10))
 					len_part = int(sd.recv(6))
-				except net_utils.socket.error:
-					shell.print_red('\nError while receiving the response from the tracker.\n')
+				except net_utils.socket.error as e:
+					shell.print_red(f'\nError while receiving the response from the tracker: {e}\n')
 					continue
 				except ValueError:
-					shell.print_red('\nInvalid packet from tracker.\n')
+					shell.print_red(f'\nInvalid packet from tracker: {e}\n')
 					continue
 
 				downloadables.append((file_md5, file_name, len_file, len_part))
@@ -138,8 +137,8 @@ class MenuHandler:
 				return
 
 			# check for file available in shared directory
-			if not os.scandir('shared'):
-				shell.print_yellow('No file available for sharing. Add files to shared dir to get started.\n')
+			if not os.listdir('shared'):
+				shell.print_yellow('No file available for sharing.\nAdd files to shared dir to get started.\n')
 				return
 
 			temp_files = []
@@ -177,28 +176,33 @@ class MenuHandler:
 							return
 
 						try:
-							filesize = os.fstat(f_obj.fileno()).st_size
+							filesize = str(os.fstat(f_obj.fileno()).st_size)
 						except OSError as e:
 							shell.print_red(f'Something went wrong: {e}')
-							raise e
+							return
+						except ValueError as e:
+							shell.print_red(f'\nUnable to convert filesize in string: {e}\n')
+							return
 
 						part_size = str(net_utils.get_part_size())
 
 						# build packet and sent to tracker
-						packet = choice + ssid + filesize + part_size + file_md5 + file_name.ljust(100)
+						packet = choice + ssid + filesize.zfill(10) + part_size.zfill(6) + file_name.ljust(100) + file_md5
 
 						sd = None
 						try:
 							sd = net_utils.send_packet(tracker_ip4, tracker_ip6, tracker_port, packet)
-						except (net_utils.socket.error, AttributeError):
+						except net_utils.socket.error as e:
 							shell.print_red(
-								f'\nError while sending the request to the tracker: {tracker_ip4}|{tracker_ip6} [{tracker_port}].\n')
-							sd.close()
+								f'\nError while sending the request to the tracker: {tracker_ip4}|{tracker_ip6} [{tracker_port}].')
+							shell.print_red(f'Error: {e}')
+							if sd is not None:
+								sd.close()
 							return
 
 						try:
 							response = sd.recv(200).decode()
-						except (net_utils.socket.error, AttributeError) as e:
+						except net_utils.socket.error as e:
 							shell.print_red(f'Unable to read the response from the socket: {e}\n')
 							sd.close()
 							return
@@ -206,7 +210,7 @@ class MenuHandler:
 
 						if len(response) != 12:
 							shell.print_red(
-								f"Invalid response: : {command} -> {response}. Expected: AADR<num_part>")
+								f"Invalid response: : {response}. Expected: AADR<num_part>")
 							return
 
 						command = response[0:4]
@@ -221,7 +225,7 @@ class MenuHandler:
 						# add file to shared_files
 						LocalData.add_shared_file(file_md5, file_name)
 						shell.print_blue(f'\nNew shared file added {file_name} | {file_md5}', end='')
-						shell.print_green(f' \#parts: {num_part}')
+						shell.print_green(f' #parts: {num_part}')
 						break
 					else:
 						# if not in sharing
@@ -237,15 +241,17 @@ class MenuHandler:
 			sd = None
 			try:
 				sd = net_utils.send_packet(tracker_ip4, tracker_ip6, tracker_port, packet)
-			except (net_utils.socket.error, AttributeError):
+			except net_utils.socket.error as e:
 				shell.print_red(
-					f'\nError while sending the request to the tracker: {tracker_ip4}|{tracker_ip6} [{tracker_port}].\n')
-				sd.close()
+					f'\nError while sending the request to the tracker: {tracker_ip4}|{tracker_ip6} [{tracker_port}].')
+				shell.print_red(f'{e}')
+				if sd is not None:
+					sd.close()
 				return
 
 			try:
 				response = sd.recv(50).decode()
-			except (net_utils.socket.error, AttributeError) as e:
+			except net_utils.socket.error as e:
 				shell.print_red(f'Unable to read the response from the socket: {e}\n')
 				sd.close()
 				return
@@ -267,11 +273,10 @@ class MenuHandler:
 
 			elif command == "NLOG":
 				part_down = int(response[4:13])
-				shell.print_yellow(f'\nUnable to logout:\nYou have {part_down} parts not shared with other peer.\n')
+				shell.print_yellow(f'\nUnable to logout:\nYou have shared only {part_down} parts with other peer.\n')
 
 			else:
-				shell.print_red(f'\nReceived a packet with a wrong command ({command}).')
-				shell.print_red(f'Received from the socket: {command} -> {response}')
+				shell.print_red(f'\nReceived a packet with a wrong command from the socket: {command} -> {response}')
 
 		else:
 			shell.print_yellow(f'\nInvalid input code: "{choice}".\nPlease retry.\n')

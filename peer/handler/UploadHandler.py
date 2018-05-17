@@ -8,8 +8,7 @@ from utils import Logger
 
 class UploadHandler(HandlerInterface):
 
-	def __init__(self, db_file: str, log: Logger.Logger):
-		self.db_file = db_file
+	def __init__(self, log: Logger.Logger):
 		self.log = log
 
 	def serve(self, sd: socket.socket) -> None:

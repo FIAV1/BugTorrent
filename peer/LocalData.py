@@ -28,7 +28,7 @@ class LocalData:
 
 	@classmethod
 	def tracker_is_empty(cls) -> bool:
-		if len(cls.get_tracker_ip4()) == 0 and len(cls.get_tracker_ip6()) == 0:
+		if not cls.tracker:
 			return True
 		else:
 			return False

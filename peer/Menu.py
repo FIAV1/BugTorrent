@@ -5,7 +5,7 @@ from utils import shell_colors
 from peer.LocalData import LocalData
 from common.ServerThread import ServerThread
 from threading import Timer
-from utils.SpinnerThread import SpinnerThread
+from peer.utils.SpinnerThread import SpinnerThread
 
 
 class Menu:
@@ -36,12 +36,13 @@ class Menu:
 
 				self.handler.serve(command)
 
-			if choice == 'q':
+			elif choice == 'q':
 
 				self.handler.serve('LOGO')
 				if LocalData.tracker_is_empty():
 					break
 				else:
+					choice = ''
 					continue
 
 			elif choice != 'q':

@@ -4,15 +4,12 @@ import re
 import ipaddress
 import socket
 import random
-from peer.LocalData import LocalData
 from utils import shell_colors
 
 config = {
-	'ipv4': '172.16.1.1',
-	'ipv6': 'fc00::1:1',
+	'ipv4': '172.16.1.3',
+	'ipv6': 'fc00::1:3',
 	'network_port': 3000,
-	'aque_port': 4000,
-	'asup_port': 5000,
 	'part_size': 262144
 }
 
@@ -137,15 +134,6 @@ def get_network_port() -> int:
 
 def get_part_size() -> int:
 	return config['part_size']
-
-
-def get_aque_port() -> int:
-	return config['aque_port']
-
-
-def get_asup_port() -> int:
-	return config['asup_port']
-
 
 def prompt_parameters_request() -> None:
 	""" Guide the user to insert his local ip adresses and port in case there are not/they are wrong

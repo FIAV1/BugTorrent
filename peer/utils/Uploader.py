@@ -20,12 +20,19 @@ class Uploader:
 
 		:return: None
 		"""
-		# TODO questa è solo una prima versione, devo ragionare bene sul comportamento per l'ultima parte,
-		# TODO che quasi sicuramente non avrà lunghezza part_size percui il numero di chunks è diverso
-		# TODO e dipende dalla dimensione di questa parte --> CALCOLARE IL #PART E VERIFICARE CHE QUELLA RICHIESTA SIA L'ULTIMA??
+
 		part_size = int(net_utils.config['part_size'])
 
-		# Defing the number of chunks in a part
+		# move the reading seek to the correct position in the file
+		self.f_obj.seek(self.num_part * part_size)
+
+		# read selected the part
+		part = self.f_obj.read(part_size)
+
+		# Redef the part size because in case the read part is the last part_size != len(part)
+		part_size = len(part)
+
+		# Defining the number of chunks in a part
 		nchunk = part_size / 4096
 
 		# Verify if the part is exactly divided by the chunks
@@ -38,13 +45,10 @@ class Uploader:
 		response = "ARET" + str(nchunk).zfill(6)
 		self.sd.send(response.encode())
 
-		# move the reading seek to the correct position in the file
-		self.f_obj.seek(self.num_part*part_size)
-
 		for i in range(nchunk):
-			data = self.f_obj.read(4096)
+			chunk = part[(i*4096):((i+1)*4096)]
 			# print(f'Letti {len(data)} bytes da file: {data}')
-			readed_size = str(len(data)).zfill(5)
-			self.sd.send(readed_size.encode())
-			self.sd.send(data)
+			read_size = str(len(chunk)).zfill(5)
+			self.sd.send(read_size.encode())
+			self.sd.send(chunk)
 		self.f_obj.close()

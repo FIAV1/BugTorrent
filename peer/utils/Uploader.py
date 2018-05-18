@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import socket
-import os
 import io
 from utils import Logger
 from utils import net_utils

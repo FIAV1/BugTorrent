@@ -7,9 +7,10 @@ import random
 from utils import shell_colors
 
 config = {
-	'ipv4': '172.16.1.',
-	'ipv6': 'fc00::1:',
-	'network_port': 3000,
+	'ipv4': '',
+	'ipv6': '',
+	'tracker_port': 3000,
+	'peer_port': 5000,
 	'part_size': 262144
 }
 
@@ -21,11 +22,9 @@ def create_socket() -> (socket.socket, int):
 	"""
 	if random.random() <= 0.5:
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		# sock.settimeout(2)
 		version = 4
 	else:
 		sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-		# sock.settimeout(2)
 		version = 6
 
 	return sock, version
@@ -33,12 +32,11 @@ def create_socket() -> (socket.socket, int):
 
 def send_packet(ip4_peer: str, ip6_peer: str, port_peer: int, packet: str) -> socket.socket:
 	""" Send the packet to the specified host
-
-		:param ip4_peer: host's ipv4 address
-		:param ip6_peer: host's ipv6 address
-		:param port_peer: host's port
-		:param packet: packet to be sent
-		:return: None
+	:param ip4_peer: host's ipv4 address
+	:param ip6_peer: host's ipv6 address
+	:param port_peer: host's port
+	:param packet: packet to be sent
+	:return: None
 	"""
 	try:
 		(sock, version) = create_socket()
@@ -61,12 +59,11 @@ def send_packet(ip4_peer: str, ip6_peer: str, port_peer: int, packet: str) -> so
 
 def send_packet_and_close(ip4_peer: str, ip6_peer: str, port_peer: int, packet: str) -> None:
 	""" Send the packet to the specified host
-
-		:param ip4_peer: host's ipv4 address
-		:param ip6_peer: host's ipv6 address
-		:param port_peer: host's port
-		:param packet: packet to be sent
-		:return: None
+	:param ip4_peer: host's ipv4 address
+	:param ip6_peer: host's ipv6 address
+	:param port_peer: host's port
+	:param packet: packet to be sent
+	:return: None
 	"""
 	(sock, version) = create_socket()
 
@@ -128,12 +125,17 @@ def set_local_ipv6(ipv6: str) -> str:
 	config['ipv6'] = ipv6
 
 
-def get_network_port() -> int:
-	return config['network_port']
+def get_tracker_port() -> int:
+	return config['tracker_port']
+
+
+def get_peer_port() -> int:
+	return config['peer_port']
 
 
 def get_part_size() -> int:
 	return config['part_size']
+
 
 def prompt_parameters_request() -> None:
 	""" Guide the user to insert his local ip adresses and port in case there are not/they are wrong

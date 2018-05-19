@@ -19,7 +19,7 @@ def startup():
 
 		# tenta login
 		ip = net_utils.get_local_ip_for_response()
-		port = str(net_utils.get_network_port()).zfill(5)
+		port = str(net_utils.get_peer_port()).zfill(5)
 		packet = "LOGI" + ip + port
 
 		tracker_ip4 = LocalData.get_tracker_ip4()
@@ -32,7 +32,6 @@ def startup():
 
 			if len(response) != 20:
 				shell.print_red(f'There was an error in the login process: unexpected: {response}.\nPlease retry.')
-				LocalData.clear_backup_data()
 				continue
 
 			session_id = response[4:20]
@@ -40,7 +39,6 @@ def startup():
 			if session_id == '0' * 16:
 				shell.print_red(
 					f'There was an error in the login process: unexpected session_id: {session_id}.\nPlease retry.')
-				LocalData.clear_backup_data()
 				continue
 
 			LocalData.session_id = session_id
@@ -56,7 +54,7 @@ def startup():
 
 	log = Logger.Logger('peer/peer.log')
 
-	server = ServerThread(net_utils.get_network_port(), UploadHandler.UploadHandler(log))
+	server = ServerThread(net_utils.get_peer_port(), UploadHandler.UploadHandler(log))
 	server.daemon = True
 	server.start()
 

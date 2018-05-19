@@ -53,14 +53,13 @@ def get_peer_files(conn: database.sqlite3.Connection, session_id: str, source: i
 	return files_rows
 
 
-def add_owner(conn: database.sqlite3.Connection, file_md5: str, session_id: str, part_list: bytearray, source: int) -> None:
+def add_owner(conn: database.sqlite3.Connection, file_md5: str, session_id: str, part_list: bytearray, source: int):
 	""" Add the peer with the given session_id as file owner into the pivot table
 	:param conn - the db connection
 	:param file_md5 - the md5 of the file
 	:param session_id - the session id of the owner
 	:param part_list - the part list containing the parts owned by the peer
 	:param source - 0 or 1 if the peer is the one who shared the file for the first time
-	:return None
 	"""
 	conn.execute('INSERT INTO files_peers VALUES (?,?,?,?)', (file_md5, session_id, part_list, source))
 
@@ -168,6 +167,17 @@ def get_part_list_by_file_and_owner(conn: database.sqlite3.Connection, file_md5:
 	return row['part_list']
 
 
+def update_part_list_by_file_and_owner(conn: database.sqlite3.Connection, part_list: bytearray, file_md5: str, session_id: str):
+	""" Get all the indicated file's part list present in the network, excluding the owner's part list
+	:param conn - the db connection
+	:param file_md5 - the md5 of the file
+	:param session_id - the session id of the owner
+	:param part_list - the updated part_list of the file
+	"""
+
+	conn.execute('UPDATE peer_files SET part_list=? WHERE file_md5=? AND session_id=?', (part_list, file_md5, session_id))
+
+
 def get_peer_part_lists(conn: database.sqlite3.Connection, session_id: str):
 	""" Get all the file's part list owned by the peer
 	:param conn - the db connection
@@ -180,3 +190,42 @@ def get_peer_part_lists(conn: database.sqlite3.Connection, session_id: str):
 	part_list_rows = c.fetchall()
 
 	return part_list_rows
+
+
+def get_file_owners_count_by_filemd5(conn: database.sqlite3.Connection, file_md5: str) -> int:
+	""" Retrieve the number of peers that own some parts of the indicated file
+	:param conn - the db connection
+	:param file_md5 - the md5 of the file
+	:return int - the file amount
+	"""
+
+	c = conn.cursor()
+
+	c.execute('SELECT COUNT(file_md5) AS num FROM files_peers WHERE file_md5=?', (file_md5,))
+
+	row = c.fetchone()
+
+	if row is None:
+		return 0
+
+	return int(row['num'])
+
+
+def get_all_part_lists_with_owner_by_filemd5(conn: database.sqlite3.Connection, file_md5: str) -> list:
+	""" Retrieve all the part lists with the respective owner of the indicated file
+	:param conn - the db connection
+	:param file_md5 - the md5 of the file
+	:return list - the list of owner + part_list
+	"""
+
+	c = conn.cursor()
+
+	c.execute(
+		'SELECT p.ip, p.port, f_p.part_list '
+		'FROM peers AS p NATURAL JOIN files_peers AS f_p '
+		'WHERE f_p.file_md5=?', (file_md5,)
+	)
+
+	rows = c.fetchall()
+
+	return rows

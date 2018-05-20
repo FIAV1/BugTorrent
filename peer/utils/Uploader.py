@@ -2,6 +2,7 @@
 
 import socket
 import io
+import math
 from utils import Logger
 from utils import net_utils
 
@@ -20,7 +21,7 @@ class Uploader:
 		:return: None
 		"""
 
-		part_size = int(net_utils.config['part_size'])
+		part_size = net_utils.config['part_size']
 
 		# move the reading seek to the correct position in the file
 		self.f_obj.seek(self.num_part * part_size)
@@ -32,13 +33,7 @@ class Uploader:
 		part_size = len(part)
 
 		# Defining the number of chunks in a part
-		nchunk = part_size / 4096
-
-		# Verify if the part is exactly divided by the chunks
-		if (part_size % 4096) != 0:
-			nchunk = nchunk + 1
-
-		nchunk = int(nchunk)
+		nchunk = int(math.ceil(part_size / 4096))
 
 		# Sending the number of chunks to the peer
 		response = "ARET" + str(nchunk).zfill(6)

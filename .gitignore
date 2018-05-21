@@ -118,3 +118,6 @@ venv.bak/
 
 # Database
 *.db
+
+# Binary-Utils
+utils/binary_utils.py

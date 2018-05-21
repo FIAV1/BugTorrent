@@ -80,6 +80,13 @@ class LocalData:
 		return file[1]
 
 	@classmethod
+	def get_shared_file_name_from_md5(cls, file_md5: str) -> str:
+		shared_files = cls.get_shared_files()
+		for file in shared_files:
+			if cls.get_shared_file_md5(file) == file_md5:
+				return cls.get_shared_file_name(file)
+
+	@classmethod
 	def clear_shared_files(cls) -> None:
 		cls.shared_files.clear()
 # ---------------------------------------------------------------------------------

@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 
 import socket
-import os
 import io
+import math
 from utils import Logger
+from utils import net_utils
 
 
 class Uploader:
 
-	def __init__(self, sd: socket.socket, f_obj: io.FileIO, log: Logger.Logger):
+	def __init__(self, sd: socket.socket, f_obj: io.FileIO, num_part: int, log: Logger.Logger):
 		self.sd = sd
 		self.f_obj = f_obj
+		self.num_part = num_part
 		self.log = log
 
 	def start(self) -> None:
@@ -19,29 +21,28 @@ class Uploader:
 		:return: None
 		"""
 
-		try:
-			filesize = os.fstat(self.f_obj.fileno()).st_size
-		except OSError as e:
-			self.log.write_red(f'Something went wrong: {e}')
-			raise e
+		part_size = net_utils.config['part_size']
 
-		# Calcolo i chunk
-		nchunk = filesize / 4096
+		# move the reading seek to the correct position in the file
+		self.f_obj.seek(self.num_part * part_size)
 
-		# Verifico se il file si divide esattamente nei chunk
-		if (filesize % 4096) != 0:
-			nchunk = nchunk + 1
+		# read selected the part
+		part = self.f_obj.read(part_size)
 
-		nchunk = int(nchunk)
+		# Redef the part size because in case the read part is the last part_size != len(part)
+		part_size = len(part)
 
-		# Invio identificativo al peer
+		# Defining the number of chunks in a part
+		nchunk = int(math.ceil(part_size / 4096))
+
+		# Sending the number of chunks to the peer
 		response = "ARET" + str(nchunk).zfill(6)
 		self.sd.send(response.encode())
 
 		for i in range(nchunk):
-			data = self.f_obj.read(4096)
+			chunk = part[(i*4096):((i+1)*4096)]
 			# print(f'Letti {len(data)} bytes da file: {data}')
-			readed_size = str(len(data)).zfill(5)
-			self.sd.send(readed_size.encode())
-			self.sd.send(data)
+			read_size = str(len(chunk)).zfill(5)
+			self.sd.send(read_size.encode())
+			self.sd.send(chunk)
 		self.f_obj.close()

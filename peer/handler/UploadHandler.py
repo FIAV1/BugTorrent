@@ -68,8 +68,6 @@ class UploadHandler(HandlerInterface):
 			file_name = LocalData.get_shared_file_name_from_md5(file_md5)
 
 			if file_name is None:
-				self.log.write_blue('Sending -> ', end='')
-				self.log.write('Sorry, the requested file is not available anymore.')
 				error_packet = 'Sorry, the requested file is not available anymore.'
 				self.send_packet(sd, socket_ip_sender, socket_port_sender, error_packet)
 				sd.close()
@@ -79,8 +77,6 @@ class UploadHandler(HandlerInterface):
 				f_obj = open('shared/' + file_name, 'rb')
 			except OSError as e:
 				self.log.write_red(f'Cannot open the file to upload: {e}')
-				self.log.write_blue('Sending -> ', end='')
-				self.log.write('Sorry, the peer encountered a problem while uploading the file.')
 				error_packet = 'Sorry, the peer encountered a problem while uploading the file.'
 				self.send_packet(sd, socket_ip_sender, socket_port_sender, error_packet)
 				sd.close()

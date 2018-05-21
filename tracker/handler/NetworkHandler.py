@@ -120,8 +120,13 @@ class NetworkHandler(HandlerInterface):
 				return
 
 			session_id = packet[4:20]
-			len_file = int(packet[20:30])
-			len_part = int(packet[30:36])
+			try:
+				len_file = int(packet[20:30])
+				len_part = int(packet[30:36])
+			except ValueError:
+				sd.close()
+				self.log.write_red(f'Invalid packet received: {len_file} and {len_part} must be integer.')
+				return
 			name = packet[36:136].lstrip().rstrip().lower()
 			md5 = packet[136:168]
 
@@ -277,7 +282,12 @@ class NetworkHandler(HandlerInterface):
 
 			session_id = packet[4:20]
 			file_md5 = packet[20:52]
-			part_num = packet[52:60]
+			try:
+				part_num = int(packet[52:60])
+			except ValueError:
+				sd.close()
+				self.log.write_red(f'Invalid packet received: {part_num} must be integer.')
+				return
 
 			try:
 				conn = database.get_connection(self.db_file)
@@ -294,7 +304,7 @@ class NetworkHandler(HandlerInterface):
 				part_list = bytearray(part_list)
 
 				# calc the index of the list that must be updated
-				byte_index = int(math.floor(part_num/8))
+				byte_index = int(math.floor(part_num / 8))
 				# calc the position of the bit to toggle
 				bit_index = part_num % 8
 				# update the part list

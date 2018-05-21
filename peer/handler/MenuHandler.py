@@ -103,10 +103,9 @@ class MenuHandler:
 				shell.print_yellow(f'{LocalData.get_downloadable_file_md5(downloadable)}')
 
 			while True:
-				file_index = input('Choose a file to download (q to cancel): ')
+				file_index = input('\nChoose a file to download (q to cancel): ')
 
 				if file_index == "q":
-					print('\n')
 					return
 
 				try:
@@ -150,10 +149,9 @@ class MenuHandler:
 				temp_files.append((file_md5, file.name))
 
 			while True:
-				file_index = input('Choose a file to share (q to cancel): ')
+				file_index = input('\nChoose a file to share (q to cancel): ')
 
 				if file_index == "q":
-					print('\n')
 					return
 
 				try:
@@ -193,8 +191,7 @@ class MenuHandler:
 						try:
 							sd = net_utils.send_packet(tracker_ip4, tracker_ip6, tracker_port, packet)
 						except net_utils.socket.error as e:
-							shell.print_red(
-								f'\nError while sending the request to the tracker: {tracker_ip4}|{tracker_ip6} [{tracker_port}].')
+							shell.print_red(f'\nError while sending the request to the tracker: {tracker_ip4}|{tracker_ip6} [{tracker_port}].')
 							shell.print_red(f'Error: {e}')
 							if sd is not None:
 								sd.close()

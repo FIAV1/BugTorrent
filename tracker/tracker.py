@@ -18,7 +18,7 @@ def startup():
 
 	log = Logger.Logger('tracker/tracker.log')
 
-	server = ServerThread(net_utils.get_network_port(), NetworkHandler.NetworkHandler(DB_FILE, log))
+	server = ServerThread(net_utils.get_tracker_port(), NetworkHandler.NetworkHandler(DB_FILE, log))
 	server.daemon = True
 	server.start()
 

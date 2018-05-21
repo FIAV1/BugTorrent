@@ -120,8 +120,13 @@ class NetworkHandler(HandlerInterface):
 				return
 
 			session_id = packet[4:20]
-			len_file = int(packet[20:30])
-			len_part = int(packet[30:36])
+			try:
+				len_file = int(packet[20:30])
+				len_part = int(packet[30:36])
+			except ValueError:
+				sd.close()
+				self.log.write_red(f'Invalid packet received: {len_file} and {len_part} must be integer.')
+				return
 			name = packet[36:136].lstrip().rstrip().lower()
 			md5 = packet[136:168]
 
@@ -172,13 +177,155 @@ class NetworkHandler(HandlerInterface):
 			self.send_packet(sd, socket_ip_sender, socket_port_sender, response)
 
 		elif command == "LOOK":
-			pass
+			if len(packet) != 40:
+				sd.close()
+				self.log.write_red(f'Invalid packet received: {packet}')
+				return
+
+			session_id = packet[4:20]
+			query = packet[20:40].lstrip().rstrip().lower()
+
+			if query != '*':
+				query = '%' + query + '%'
+
+			try:
+				conn = database.get_connection(self.db_file)
+				conn.row_factory = database.sqlite3.Row
+			except database.Error as e:
+				sd.close()
+				self.log.write_red(f'An error has occurred while trying to serve the request: {e}')
+				return
+
+			try:
+				self.check_peer_authentication(conn, session_id, sd)
+
+				num_files = file_repository.get_files_count_by_querystring(conn, query)
+
+				response = "ALOO" + str(num_files).zfill(3)
+
+				file_rows = file_repository.get_files_by_querystring(conn, query)
+
+				for file_row in file_rows:
+					file_md5 = file_row['file_md5']
+					file_name = file_row['file_name']
+					len_file = file_row['len_file']
+					len_part = file_row['len_part']
+
+					response += file_md5 + file_name.ljust(100) + str(len_file).zfill(10) + str(len_part).zfill(6)
+
+				conn.commit()
+				conn.close()
+			except database.Error as e:
+				conn.rollback()
+				conn.close()
+				sd.close()
+				self.log.write_red(f'An error has occurred while trying to serve the request: {e}')
+				return
+
+			self.send_packet(sd, socket_ip_sender, socket_port_sender, response)
 
 		elif command == "FCHU":
-			pass
+			if len(packet) != 52:
+				sd.close()
+				self.log.write_red(f'Invalid packet received: {packet}')
+				return
+
+			session_id = packet[4:20]
+			file_md5 = packet[20:52]
+
+			try:
+				conn = database.get_connection(self.db_file)
+				conn.row_factory = database.sqlite3.Row
+			except database.Error as e:
+				sd.close()
+				self.log.write_red(f'An error has occurred while trying to serve the request: {e}')
+				return
+
+			try:
+				self.check_peer_authentication(conn, session_id, sd)
+
+				num_hit_peer = file_repository.get_file_owners_count_by_filemd5(conn, file_md5)
+
+				response = "AFCH".encode() + str(num_hit_peer).zfill(3).encode()
+
+				part_list_rows = file_repository.get_all_part_lists_with_owner_by_filemd5(conn, file_md5)
+
+				for part_list_row in part_list_rows:
+					owner_ip = part_list_row['ip']
+					owner_port = part_list_row['port']
+					part_list = part_list_row['part_list']
+
+					response += owner_ip.encode() + owner_port.encode() + part_list
+
+				conn.commit()
+				conn.close()
+			except database.Error as e:
+				conn.rollback()
+				conn.close()
+				sd.close()
+				self.log.write_red(f'An error has occurred while trying to serve the request: {e}')
+				return
+
+			try:
+				sd.send(response)
+				sd.close()
+				self.log.write_blue(f'Sending to {socket_ip_sender} [{socket_port_sender}] -> ', end='')
+				self.log.write(f'{response}')
+			except socket.error as e:
+				self.log.write_red(f'An error has occurred while sending {packet} to {socket_ip_sender} [{socket_port_sender}]: {e}')
 
 		elif command == "RPAD":
-			pass
+			if len(packet) != 60:
+				sd.close()
+				self.log.write_red(f'Invalid packet received: {packet}')
+				return
+
+			session_id = packet[4:20]
+			file_md5 = packet[20:52]
+			try:
+				part_num = int(packet[52:60])
+			except ValueError:
+				sd.close()
+				self.log.write_red(f'Invalid packet received: {part_num} must be integer.')
+				return
+
+			try:
+				conn = database.get_connection(self.db_file)
+				conn.row_factory = database.sqlite3.Row
+			except database.Error as e:
+				sd.close()
+				self.log.write_red(f'An error has occurred while trying to serve the request: {e}')
+				return
+
+			try:
+				self.check_peer_authentication(conn, session_id, sd)
+
+				part_list = file_repository.get_part_list_by_file_and_owner(conn, file_md5, session_id)
+				part_list = bytearray(part_list)
+
+				# calc the index of the list that must be updated
+				byte_index = int(math.floor(part_num / 8))
+				# calc the position of the bit to toggle
+				bit_index = part_num % 8
+				# update the part list
+				part_list[byte_index] |= pow(2, 7 - bit_index)
+				file_repository.update_part_list_by_file_and_owner(conn, part_list, file_md5, session_id)
+
+				conn.commit()
+				conn.close()
+			except database.Error as e:
+				conn.rollback()
+				conn.close()
+				sd.close()
+				self.log.write_red(f'An error has occurred while trying to serve the request: {e}')
+				return
+
+			num_owned_parts = 0
+			for part in part_list:
+				num_owned_parts += binary_utils.count_set_bits(part)
+
+			response = "APAD" + str(num_owned_parts).zfill(8)
+			self.send_packet(sd, socket_ip_sender, socket_port_sender, response)
 
 		elif command == "LOGO":
 			if len(packet) != 20:

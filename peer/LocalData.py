@@ -13,13 +13,13 @@ class LocalData:
 	# (file_md5, filename)
 	shared_files = list()
 
-	# [('ipv4_i', 'ipv6_i', 'port_i', 'part_list_i')]
+	# [(owner_ipv4', 'owner_ipv6', 'owner_port'), 'part_list_i']
 	part_list_table = list()
 
-	# bytearray
+	# bytearray containing the part list regarding the file under download
 	downloading_part_list = bytearray()
 
-	# number of parts owned
+	# number of parts owned regarding the file under download
 	num_parts_owned = int()
 
 	# tracker management ------------------------------------------------------------
@@ -130,19 +130,23 @@ class LocalData:
 	# ---------------------------------------------------------------------------------
 
 	# downloading part list -----------------------------------------------------------
-
 	@classmethod
-	def set_downloading_part_list(cls, part_list_length) -> None:
+	def create_downloading_part_list(cls, part_list_length) -> None:
 		cls.downloading_part_list = bytearray(part_list_length)
 
-	# ---------------------------------------------------------------------------------
+	@classmethod
+	def get_downloading_part_list(cls) -> bytearray:
+		return cls.downloading_part_list
 
-	# downloading part list -----------------------------------------------------------
+	@classmethod
+	def set_downloading_part_list(cls, part_list: bytearray) -> None:
+		cls.downloading_part_list = part_list
+
 	@classmethod
 	def set_num_parts_owned(cls, num_parts_owned: int) -> None:
 		cls.num_parts_owned = num_parts_owned
 
 	@classmethod
-	def get_num_parts_owned(cls) -> None:
+	def get_num_parts_owned(cls) -> int:
 		return cls.num_parts_owned
 	# ---------------------------------------------------------------------------------

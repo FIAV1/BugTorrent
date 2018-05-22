@@ -27,6 +27,7 @@ class MenuHandler:
 		log = Logger.Logger('peer/peer.log')
 
 		if choice == "LOOK":
+			# Search a file
 			while True:
 				search = input('\nInsert file\'s name (q to cancel): ')
 
@@ -53,6 +54,7 @@ class MenuHandler:
 					sd.close()
 				return
 
+			# Receiving the response list
 			try:
 				command = sd.recv(4).decode()
 			except net_utils.socket.error as e:
@@ -71,7 +73,6 @@ class MenuHandler:
 				sd.close()
 				return
 
-			# check for file matching the keyword
 			if num_files == 0:
 				shell.print_yellow(f'{search} not found.\n')
 				sd.close()
@@ -80,7 +81,6 @@ class MenuHandler:
 			downloadables = list()
 
 			for i in range(num_files):
-
 				try:
 					file_md5 = sd.recv(32).decode()
 					file_name = sd.recv(100).decode().lstrip().rstrip()
@@ -106,6 +106,7 @@ class MenuHandler:
 				print(f'{count}] {LocalData.get_downloadable_file_name(downloadable)} | ', end='')
 				shell.print_yellow(f'{LocalData.get_downloadable_file_md5(downloadable)}')
 
+			# Download choice
 			while True:
 				file_index = input('\nChoose a file to download (q to cancel): ')
 
@@ -124,6 +125,17 @@ class MenuHandler:
 				else:
 					choosed_file_md5 = LocalData.get_downloadable_file_md5(downloadables[file_index])
 					choosed_file_name = LocalData.get_downloadable_file_name(downloadables[file_index])
+					if LocalData.is_shared_file(choosed_file_md5, choosed_file_name):
+						while True:
+							choice = input(f'You already have downloaded {choosed_file_name}. Do you want overwrite it? (y/n)')
+							if choice == 'y':
+								break
+							elif choice == 'n':
+								return
+							else:
+								print('Please type \'y\' or \'n\'')
+								continue
+
 					choosed_file_lenght = LocalData.get_downloadable_file_length(downloadables[file_index])
 					choosed_file_part_lenght = LocalData.get_downloadable_file_part_length(downloadables[file_index])
 					break
@@ -131,42 +143,37 @@ class MenuHandler:
 			choosed_file_parts = int(math.ceil(choosed_file_lenght/choosed_file_part_lenght))
 			choosed_file_part_list_length = int(math.ceil(choosed_file_parts/8))
 
-			LocalData.set_downloading_part_list(choosed_file_part_list_length)
+			# Download phase
+			LocalData.create_downloading_part_list(choosed_file_part_list_length)
 
+			# 1) Initiating the thread responsible for update of the part_list_table in background
 			update_event = Event()
+			updater_thread = UpdaterThread.UpdaterThread(choosed_file_md5, choosed_file_part_list_length, update_event, log)
+			updater_thread.start()
 
-			update_thread = UpdaterThread.UpdaterThread(choosed_file_md5, choosed_file_part_list_length, update_event, log)
-			update_thread.start()
-
+			# 2) Create the new file
 			f_obj = open(f'shared/{choosed_file_name}', 'wb')
 			f_obj.close()
-
 			LocalData.set_num_parts_owned(0)
-
 			progress_bar.print_progress_bar(0, choosed_file_parts, prefix='Downloading:', suffix='Complete', length=50)
 
-			# while tutto il file non è stato scaricato
+			# Until all the parts hasn't been downloaded
 			while choosed_file_parts != LocalData.get_num_parts_owned():
 				update_event.wait(70)
 				update_event.clear()
 
-				# ottieni parti mancanti del file
-				downloadable_parts = binary_utils.get_downloadable_parts(LocalData.get_part_list_table(), choosed_file_part_list_length, LocalData.downloading_part_list)
+				# Get the file parts we don't have yet
+				downloadable_parts = binary_utils.get_downloadable_parts()
 
-				print(downloadable_parts)
-
+				# Start a DownloaderThread for each parts to download
+				# TODO: Utilizzare un pool di thread o qualcosa di simile
 				downloader_threads = list()
-
-				# avvia download delle parti IN CONTEMPORANEO
 				for part_num in downloadable_parts:
-
-					print(part_num)
-
 					try:
 						f_obj = open(f'shared/{choosed_file_name}', 'r+b')
 						f_obj.seek(part_num * choosed_file_part_lenght)
-						owner = binary_utils.get_owner_by_part(part_num, LocalData.get_part_list_table())
-						downloader = DownloaderThread(owner, choosed_file_md5, f_obj, part_num)
+						owner = binary_utils.get_owner_by_part(part_num)
+						downloader = DownloaderThread(owner, choosed_file_md5, f_obj, part_num, choosed_file_parts)
 						downloader.start()
 						downloader_threads.append(downloader)
 
@@ -175,10 +182,12 @@ class MenuHandler:
 
 				for downloader in downloader_threads:
 					downloader.join()
-					progress_bar.print_progress_bar(LocalData.get_num_parts_owned(), choosed_file_parts, prefix='Downloading:', suffix='Complete', length=50)
 
-			update_thread.stop()
+			updater_thread.stop()
 			shell.print_green('\nDownload completed.')
+
+			# Adding the file to the shared file list
+			LocalData.add_shared_file(choosed_file_md5, choosed_file_name)
 
 		elif choice == "ADDR":
 			# check if shared directory exist
@@ -312,14 +321,14 @@ class MenuHandler:
 			command = response[0:4]
 
 			if command == "ALOG":
-				part_own = int(response[4:13])
+				part_own = int(response[4:14])
 				shell.print_green('\nSuccessfully logged out')
 				shell.print_blue(f'{part_own} parts has been removed from sharing.\n')
 				LocalData.clear_shared_files()
 				LocalData.clear_tracker()
 
 			elif command == "NLOG":
-				part_down = int(response[4:13])
+				part_down = int(response[4:14])
 				shell.print_yellow(f'\nUnable to logout:\nYou have shared only {part_down} parts with other peer.\n')
 
 			else:

@@ -79,7 +79,10 @@ class UpdaterThread(Thread):
 				(hitpeer_ip4, hitpeer_ip6) = net_utils.get_ip_pair(sock.recv(55).decode())
 				hitpeer_port = sock.recv(5).decode()
 				part_list = sock.recv(self.part_list_length)
-				part_list_table.append(((hitpeer_ip4, hitpeer_ip6, hitpeer_port), bytearray(part_list)))
+
+				# Adding only other peers to the part list table regarding the file of interest
+				if hitpeer_ip4 != net_utils.get_local_ipv4() and hitpeer_ip6 != net_utils.get_local_ipv6():
+					part_list_table.append(((hitpeer_ip4, hitpeer_ip6, hitpeer_port), bytearray(part_list)))
 
 			LocalData.set_part_list_table(part_list_table)
 

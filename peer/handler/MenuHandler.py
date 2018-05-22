@@ -126,16 +126,8 @@ class MenuHandler:
 					choosed_file_md5 = LocalData.get_downloadable_file_md5(downloadables[file_index])
 					choosed_file_name = LocalData.get_downloadable_file_name(downloadables[file_index])
 					if LocalData.is_shared_file(choosed_file_md5, choosed_file_name):
-						while True:
-							choice = input(f'You already have downloaded {choosed_file_name}. Do you want overwrite it? (y/n)')
-							if choice == 'y':
-								break
-							elif choice == 'n':
-								return
-							else:
-								print('Please type \'y\' or \'n\'')
-								continue
-
+						shell.print_green(f'\nYou already have downloaded {choosed_file_name}.')
+						continue
 					choosed_file_lenght = LocalData.get_downloadable_file_length(downloadables[file_index])
 					choosed_file_part_lenght = LocalData.get_downloadable_file_part_length(downloadables[file_index])
 					break

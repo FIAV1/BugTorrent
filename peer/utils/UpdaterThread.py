@@ -86,7 +86,11 @@ class UpdaterThread(Thread):
 
 			LocalData.set_part_list_table(part_list_table)
 
-			self.log.write_green(f'\nPart list updated, {num_hitpeer} sources added.')
+			self.log.write(f'\nPart list table for ', end='')
+			self.log.write_yellow(f'{self.file_md5} ', end='')
+			self.log.write(f'updated: ', end='')
+			self.log.write_green(f'{len(part_list_table)} ', end='')
+			self.log.write(f'sources added.')
 			self.update_event.set()
 
 			time.sleep(60)

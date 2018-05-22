@@ -36,7 +36,7 @@ class Uploader:
 		nchunk = int(math.ceil(part_size / 4096))
 
 		# Sending the number of chunks to the peer
-		response = "ARET" + str(nchunk).zfill(6)
+		response = "AREP" + str(nchunk).zfill(6)
 		self.sd.send(response.encode())
 
 		for i in range(nchunk):

@@ -153,15 +153,20 @@ class MenuHandler:
 				# ottieni parti mancanti del file
 				downloadable_parts = binary_utils.get_downloadable_parts(LocalData.get_part_list_table(), choosed_file_part_list_length, LocalData.downloading_part_list)
 
+				print(downloadable_parts)
+
 				downloader_threads = list()
 
 				# avvia download delle parti IN CONTEMPORANEO
 				for part_num in downloadable_parts:
+
+					print(part_num)
+
 					try:
 						f_obj = open(f'shared/{choosed_file_name}', 'r+b')
 						f_obj.seek(part_num * choosed_file_part_lenght)
 						owner = binary_utils.get_owner_by_part(part_num, LocalData.get_part_list_table())
-						downloader = DownloaderThread(owner, f_obj, part_num)
+						downloader = DownloaderThread(owner, choosed_file_md5, f_obj, part_num)
 						downloader.start()
 						downloader_threads.append(downloader)
 

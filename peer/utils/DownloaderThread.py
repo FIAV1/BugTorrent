@@ -10,11 +10,12 @@ from threading import Thread
 
 class DownloaderThread(Thread):
 
-	def __init__(self, owner: tuple, f_obj: io.FileIO, part_num: int):
+	def __init__(self, owner: tuple, file_md5: str, f_obj: io.FileIO, part_num: int):
 		super(DownloaderThread, self).__init__()
 		self.owner_ip4 = owner[0]
 		self.owner_ip6 = owner[1]
-		self.owner_port = owner[2]
+		self.owner_port = int(owner[2])
+		self.file_md5 = file_md5
 		self.f_obj = f_obj
 		self.part_num = part_num
 
@@ -58,7 +59,7 @@ class DownloaderThread(Thread):
 		"""
 
 		try:
-			packet = 'RETP' + self.file_md5 + self.part_num
+			packet = 'RETP' + self.file_md5 + str(self.part_num).zfill(8)
 
 			sock = self.__connect(self.owner_ip4, self.owner_ip6, self.owner_port, packet)
 		except socket.error as e:
@@ -93,7 +94,7 @@ class DownloaderThread(Thread):
 		self.f_obj.close()
 
 		try:
-			packet = 'RPAD' + LocalData.session_id + self.file_md5 + self.part_num
+			packet = 'RPAD' + LocalData.session_id + self.file_md5 + str(self.part_num).zfill(8)
 
 			sock = self.__connect(LocalData.get_tracker_ip4(), LocalData.get_tracker_ip6(), LocalData.get_tracker_port(), packet)
 		except socket.error as e:
@@ -102,7 +103,7 @@ class DownloaderThread(Thread):
 
 		ack = sock.recv(4).decode()
 		if ack != "APAD":
-			shell_colors.print_red(f'\nInvalid command received: {ack}. Expected: AREP\n')
+			shell_colors.print_red(f'\nInvalid command received: {ack}. Expected: APAD\n')
 			sock.close()
 			return
 

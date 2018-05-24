@@ -151,7 +151,7 @@ class MenuHandler:
 
 			# Until all the parts hasn't been downloaded
 			while choosed_file_parts != LocalData.get_num_parts_owned():
-				update_event.wait(70)
+				update_event.wait(2)
 				update_event.clear()
 
 				# Get the file parts we don't have yet

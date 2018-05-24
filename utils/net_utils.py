@@ -225,3 +225,4 @@ def prompt_host_request(message: str) -> tuple:
 		break
 
 	return ip4, ip6, port
+

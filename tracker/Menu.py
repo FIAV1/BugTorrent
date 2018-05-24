@@ -26,11 +26,11 @@ class Menu:
 
 			if choice in {'1', '2', '3'}:
 				if choice == '1':
-					command = ""
+					command = "LISTFILES"
 				elif choice == '2':
-					command = ""
+					command = "SHOWPARTS"
 				elif choice == '3':
-					command = ""
+					command = "LISTPEERS"
 
 				self.handler.serve(command)
 			elif choice != 'q':

@@ -79,11 +79,18 @@ class UpdaterThread(Thread):
 				(hitpeer_ip4, hitpeer_ip6) = net_utils.get_ip_pair(sock.recv(55).decode())
 				hitpeer_port = sock.recv(5).decode()
 				part_list = sock.recv(self.part_list_length)
-				part_list_table.append(((hitpeer_ip4, hitpeer_ip6, hitpeer_port), bytearray(part_list)))
+
+				# Adding only other peers to the part list table regarding the file of interest
+				if hitpeer_ip4 != net_utils.get_local_ipv4() and hitpeer_ip6 != net_utils.get_local_ipv6():
+					part_list_table.append(((hitpeer_ip4, hitpeer_ip6, hitpeer_port), bytearray(part_list)))
 
 			LocalData.set_part_list_table(part_list_table)
 
-			self.log.write_green(f'\nPart list updated, {num_hitpeer} sources added.')
+			self.log.write(f'\nPart list table for ', end='')
+			self.log.write_yellow(f'{self.file_md5} ', end='')
+			self.log.write(f'updated: ', end='')
+			self.log.write_green(f'{len(part_list_table)} ', end='')
+			self.log.write(f'sources added.')
 			self.update_event.set()
 
 			time.sleep(60)

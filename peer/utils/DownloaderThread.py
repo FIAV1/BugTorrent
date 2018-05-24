@@ -6,17 +6,21 @@ import io
 from peer.LocalData import LocalData
 from utils import shell_colors
 from threading import Thread
+from peer.utils import progress_bar
+from utils import binary_utils
 
 
 class DownloaderThread(Thread):
 
-	def __init__(self, owner: tuple, f_obj: io.FileIO, part_num: int):
+	def __init__(self, owner: tuple, file_md5: str, f_obj: io.FileIO, part_num: int, total_file_parts: int):
 		super(DownloaderThread, self).__init__()
 		self.owner_ip4 = owner[0]
 		self.owner_ip6 = owner[1]
-		self.owner_port = owner[2]
+		self.owner_port = int(owner[2])
+		self.file_md5 = file_md5
 		self.f_obj = f_obj
 		self.part_num = part_num
+		self.total_file_parts = total_file_parts
 
 	def __create_socket(self) -> (socket.socket, int):
 		""" Create the active socket
@@ -58,7 +62,7 @@ class DownloaderThread(Thread):
 		"""
 
 		try:
-			packet = 'RETP' + self.file_md5 + self.part_num
+			packet = 'RETP' + self.file_md5 + str(self.part_num).zfill(8)
 
 			sock = self.__connect(self.owner_ip4, self.owner_ip6, self.owner_port, packet)
 		except socket.error as e:
@@ -67,7 +71,7 @@ class DownloaderThread(Thread):
 
 		ack = sock.recv(4).decode()
 		if ack != "AREP":
-			shell_colors.print_red(f'\nInvalid command received: {ack}. Expected: AREP\n')
+			shell_colors.print_red(f'Invalid command received: {ack}. Expected: AREP')
 			sock.close()
 			return
 
@@ -93,7 +97,7 @@ class DownloaderThread(Thread):
 		self.f_obj.close()
 
 		try:
-			packet = 'RPAD' + LocalData.session_id + self.file_md5 + self.part_num
+			packet = 'RPAD' + LocalData.session_id + self.file_md5 + str(self.part_num).zfill(8)
 
 			sock = self.__connect(LocalData.get_tracker_ip4(), LocalData.get_tracker_ip6(), LocalData.get_tracker_port(), packet)
 		except socket.error as e:
@@ -102,7 +106,7 @@ class DownloaderThread(Thread):
 
 		ack = sock.recv(4).decode()
 		if ack != "APAD":
-			shell_colors.print_red(f'\nInvalid command received: {ack}. Expected: AREP\n')
+			shell_colors.print_red(f'\nInvalid command received: {ack}. Expected: APAD\n')
 			sock.close()
 			return
 
@@ -113,3 +117,4 @@ class DownloaderThread(Thread):
 			return
 
 		LocalData.set_num_parts_owned(num_parts_owned)
+		progress_bar.print_progress_bar(num_parts_owned, self.total_file_parts, prefix='Downloading:', suffix='Complete', length=50)

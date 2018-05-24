@@ -125,7 +125,7 @@ class NetworkHandler(HandlerInterface):
 				len_part = int(packet[30:36])
 			except ValueError:
 				sd.close()
-				self.log.write_red(f'Invalid packet received: {len_file} and {len_part} must be integer.')
+				self.log.write_red(f'Invalid packet received: {packet[20:30]} and {packet[30:36]} must be integer.')
 				return
 			name = packet[36:136].lstrip().rstrip().lower()
 			md5 = packet[136:168]
@@ -286,7 +286,7 @@ class NetworkHandler(HandlerInterface):
 				part_num = int(packet[52:60])
 			except ValueError:
 				sd.close()
-				self.log.write_red(f'Invalid packet received: {part_num} must be integer.')
+				self.log.write_red(f'Invalid packet received: {packet[52:60]} must be integer.')
 				return
 
 			try:
@@ -299,9 +299,16 @@ class NetworkHandler(HandlerInterface):
 
 			try:
 				self.check_peer_authentication(conn, session_id, sd)
-
+				new_part_list = False
 				part_list = file_repository.get_part_list_by_file_and_owner(conn, file_md5, session_id)
-				part_list = bytearray(part_list)
+
+				if not part_list:
+					new_part_list = True
+					# create an empty part list
+					generic_part_list = file_repository.get_part_list_by_filemd5(conn, file_md5)
+					part_list = bytearray(len(generic_part_list))
+				else:
+					part_list = bytearray(part_list)
 
 				# calc the index of the list that must be updated
 				byte_index = int(math.floor(part_num / 8))
@@ -309,7 +316,11 @@ class NetworkHandler(HandlerInterface):
 				bit_index = part_num % 8
 				# update the part list
 				part_list[byte_index] |= pow(2, 7 - bit_index)
-				file_repository.update_part_list_by_file_and_owner(conn, part_list, file_md5, session_id)
+
+				if new_part_list:
+					file_repository.add_owner(conn, file_md5, session_id, part_list, 0)
+				else:
+					file_repository.update_part_list_by_file_and_owner(conn, file_md5, session_id, part_list,)
 
 				conn.commit()
 				conn.close()

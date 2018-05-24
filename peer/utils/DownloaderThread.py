@@ -116,5 +116,6 @@ class DownloaderThread(Thread):
 			shell_colors.print_red('Error while retrieving the parts owned from the tracker.')
 			return
 
+		binary_utils.update_owned_parts(self.part_num)
 		LocalData.set_num_parts_owned(num_parts_owned)
 		progress_bar.print_progress_bar(num_parts_owned, self.total_file_parts, prefix='Downloading:', suffix='Complete', length=50)

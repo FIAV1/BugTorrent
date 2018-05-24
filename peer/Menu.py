@@ -25,14 +25,20 @@ class Menu:
 			print('\n- Main Menù -----------------------')
 			print('| <1> Search a file to download   |')
 			print('| <2> Share a file                |')
+			print('| <3> Files in sharing            |')
+			print('| <4> Your tracker                |')
 			print('-----------------------------------')
 			choice = input('Select an option (q to logout): ')
 
-			if choice in {'1', '2'}:
+			if choice in {'1', '2', '3', '4'}:
 				if choice == '1':
 					command = 'LOOK'
 				elif choice == '2':
 					command = 'ADDR'
+				elif choice == '3':
+					command = 'SHAR'
+				elif choice == '4':
+					command = 'TRAC'
 
 				self.handler.serve(command)
 

@@ -158,12 +158,13 @@ class MenuHandler:
 				# avvia download delle parti IN CONTEMPORANEO
 				for part_num in downloadable_parts:
 					try:
-						f_obj = open(f'shared/{choosed_file_name}', 'r+b')
-						f_obj.seek(part_num * choosed_file_part_lenght)
-						owner = binary_utils.get_owner_by_part(part_num, LocalData.get_part_list_table())
-						downloader = DownloaderThread(owner, f_obj, part_num)
-						downloader.start()
-						downloader_threads.append(downloader)
+						if len(downloader_threads) < 16:
+							f_obj = open(f'shared/{choosed_file_name}', 'r+b')
+							f_obj.seek(part_num * choosed_file_part_lenght)
+							owner = binary_utils.get_owner_by_part(part_num, LocalData.get_part_list_table())
+							downloader = DownloaderThread(owner, f_obj, part_num)
+							downloader.start()
+							downloader_threads.append(downloader)
 
 					except OSError:
 						shell.print_red(f'\nError while downloading {choosed_file_name}.\n')

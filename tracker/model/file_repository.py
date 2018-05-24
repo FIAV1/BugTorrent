@@ -164,10 +164,13 @@ def get_part_list_by_file_and_owner(conn: database.sqlite3.Connection, file_md5:
 
 	row = c.fetchone()
 
-	return row['part_list']
+	if row is not None:
+		return row['part_list']
+	else:
+		return tuple()
 
 
-def update_part_list_by_file_and_owner(conn: database.sqlite3.Connection, part_list: bytearray, file_md5: str, session_id: str):
+def update_part_list_by_file_and_owner(conn: database.sqlite3.Connection, file_md5: str, session_id: str, part_list: bytearray):
 	""" Get all the indicated file's part list present in the network, excluding the owner's part list
 	:param conn - the db connection
 	:param file_md5 - the md5 of the file
@@ -175,7 +178,7 @@ def update_part_list_by_file_and_owner(conn: database.sqlite3.Connection, part_l
 	:param part_list - the updated part_list of the file
 	"""
 
-	conn.execute('UPDATE peer_files SET part_list=? WHERE file_md5=? AND session_id=?', (part_list, file_md5, session_id))
+	conn.execute('UPDATE files_peers SET part_list=? WHERE file_md5=? AND session_id=?', (part_list, file_md5, session_id))
 
 
 def get_peer_part_lists(conn: database.sqlite3.Connection, session_id: str):
@@ -229,3 +232,17 @@ def get_all_part_lists_with_owner_by_filemd5(conn: database.sqlite3.Connection, 
 	rows = c.fetchall()
 
 	return rows
+
+
+def get_part_list_by_filemd5(conn: database.sqlite3.Connection, file_md5: str) -> list:
+	""" Get all the indicated file's part list present in the network, excluding the owner's part list
+	:param conn - the db connection
+	:param file_md5 - the md5 of the file
+	:return list - the result row
+	"""
+	c = conn.cursor()
+	c.execute('SELECT part_list FROM files_peers WHERE file_md5=?', (file_md5,))
+
+	row = c.fetchone()
+
+	return row['part_list']

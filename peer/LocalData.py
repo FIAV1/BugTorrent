@@ -13,6 +13,15 @@ class LocalData:
 	# (file_md5, filename)
 	shared_files = list()
 
+	# [(owner_ipv4', 'owner_ipv6', 'owner_port'), 'part_list_i']
+	part_list_table = list()
+
+	# bytearray containing the part list regarding the file under download
+	downloading_part_list = bytearray()
+
+	# number of parts owned regarding the file under download
+	num_parts_owned = int()
+
 	# tracker management ------------------------------------------------------------
 	@classmethod
 	def get_tracker(cls) -> tuple:
@@ -89,13 +98,9 @@ class LocalData:
 	@classmethod
 	def clear_shared_files(cls) -> None:
 		cls.shared_files.clear()
-# ---------------------------------------------------------------------------------
+	# ---------------------------------------------------------------------------------
 
-# downloadables_file management ----------------------------------------------------
-	# downloadables is the list of file received from the tracker in MenuHandler.
-	# (file_md5, file_name, len_file, len_part)
-	# the following method are used to improve the readability of the code in MenuHandler and in Downloader
-
+	# downloadables_file management ---------------------------------------------------
 	@classmethod
 	def get_downloadable_file_md5(cls, file: tuple) -> str:
 		return file[0]
@@ -111,4 +116,37 @@ class LocalData:
 	@classmethod
 	def get_downloadable_file_part_length(cls, file: tuple) -> int:
 		return int(file[3])
-# ---------------------------------------------------------------------------------
+	# ---------------------------------------------------------------------------------
+
+	# part list table management ------------------------------------------------------
+	@classmethod
+	def set_part_list_table(cls, part_list_table: list) -> None:
+		cls.part_list_table = part_list_table
+
+	@classmethod
+	def get_part_list_table(cls) -> list:
+		return cls.part_list_table
+
+	# ---------------------------------------------------------------------------------
+
+	# downloading part list -----------------------------------------------------------
+	@classmethod
+	def create_downloading_part_list(cls, part_list_length) -> None:
+		cls.downloading_part_list = bytearray(part_list_length)
+
+	@classmethod
+	def get_downloading_part_list(cls) -> bytearray:
+		return cls.downloading_part_list
+
+	@classmethod
+	def set_downloading_part_list(cls, part_list: bytearray) -> None:
+		cls.downloading_part_list = part_list
+
+	@classmethod
+	def set_num_parts_owned(cls, num_parts_owned: int) -> None:
+		cls.num_parts_owned = num_parts_owned
+
+	@classmethod
+	def get_num_parts_owned(cls) -> int:
+		return cls.num_parts_owned
+	# ---------------------------------------------------------------------------------

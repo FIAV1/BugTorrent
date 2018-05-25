@@ -307,7 +307,6 @@ class MenuHandler:
 				part_own = int(response[4:14])
 				shell.print_green('\nSuccessfully logged out')
 				shell.print_blue(f'{part_own} parts has been removed from sharing.\n')
-				LocalData.clear_shared_files()
 				LocalData.clear_tracker()
 
 			elif command == "NLOG":

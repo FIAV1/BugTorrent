@@ -63,5 +63,6 @@ class Menu:
 
 		timer.join()
 		spinner.join()
+		LocalData.clear_shared_files()
 
 		shell_colors.print_blue('\nYou leaved the Network\nBye!\n')

@@ -155,8 +155,11 @@ class NetworkHandler(HandlerInterface):
 
 					for i in range(part_list_length - 1):
 						part_list[i] = 255
-					for i in range(num_part % 8):
-						part_list[part_list_length - 1] |= pow(2, 7-i)
+					if num_part % 8 == 0:
+						part_list[part_list_length - 1] = 255
+					else:
+						for i in range(num_part % 8):
+							part_list[part_list_length - 1] |= pow(2, 7-i)
 
 					file_repository.add_owner(conn, md5, session_id, part_list, 1)
 				else:

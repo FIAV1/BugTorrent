@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
-from peer.utils.DownloaderThread import DownloaderThread
+from peer.thread import download_task
 import os
-from utils import net_utils, binary_utils, hasher, Logger, shell_colors as shell
-from peer.utils import UpdaterThread
+from utils import net_utils, hasher, Logger, shell_colors as shell
+from peer.thread import UpdaterThread
 from peer.LocalData import LocalData
 import math
 from threading import Event
-from peer.utils import progress_bar
+from peer.thread import progress_bar
+from concurrent.futures import ThreadPoolExecutor
 
 
 class MenuHandler:
@@ -153,27 +154,18 @@ class MenuHandler:
 			while choosed_file_parts != LocalData.get_num_parts_owned():
 				update_event.wait(2)
 				update_event.clear()
-
 				# Get the file parts we don't have yet
-				downloadable_parts = binary_utils.get_downloadable_parts()
-
-				# Start a DownloaderThread for each parts to download
-				downloader_threads = list()
-				for part_num in downloadable_parts:
-					try:
-						if len(downloader_threads) < 16:
-							f_obj = open(f'shared/{choosed_file_name}', 'r+b')
-							f_obj.seek(part_num * choosed_file_part_lenght)
-							owner = binary_utils.get_owner_by_part(part_num)
-							downloader = DownloaderThread(owner, choosed_file_md5, f_obj, part_num, choosed_file_parts)
-							downloader.start()
-							downloader_threads.append(downloader)
-
-					except OSError:
-						shell.print_red(f'\nError while downloading {choosed_file_name}.\n')
-
-				for downloader in downloader_threads:
-					downloader.join()
+				downloadable_parts = LocalData.get_downloadable_parts()
+				# We can use a with statement to ensure threads are cleaned up promptly
+				with ThreadPoolExecutor(max_workers=10) as executor:
+					for part_num in downloadable_parts:
+						try:
+							owner = LocalData.get_owner_by_part(part_num)
+							# Start the load operations
+							executor.submit(download_task.run, owner, choosed_file_md5, choosed_file_name, part_num, choosed_file_part_lenght, choosed_file_parts)
+						except OSError as e:
+							shell.print_red(f'\nError while downloading {choosed_file_name}: {e}\n')
+					executor.shutdown()
 
 			updater_thread.stop()
 			shell.print_green('\nDownload completed.')

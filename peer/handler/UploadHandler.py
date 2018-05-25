@@ -5,7 +5,7 @@ import ipaddress
 from common.HandlerInterface import HandlerInterface
 from utils import Logger, shell_colors as shell
 from peer.LocalData import LocalData
-from peer.utils.Uploader import Uploader
+from peer.thread.Uploader import Uploader
 
 
 class UploadHandler(HandlerInterface):

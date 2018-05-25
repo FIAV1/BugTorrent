@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+import math
+import random
+
 
 class LocalData:
 	""" Data class containing data structures and methods to interact with them """
@@ -129,7 +132,7 @@ class LocalData:
 
 	# ---------------------------------------------------------------------------------
 
-	# downloading part list -----------------------------------------------------------
+	# downloading part list management-------------------------------------------------
 	@classmethod
 	def create_downloading_part_list(cls, part_list_length) -> None:
 		cls.downloading_part_list = bytearray(part_list_length)
@@ -143,10 +146,102 @@ class LocalData:
 		cls.downloading_part_list = part_list
 
 	@classmethod
+	def update_downloading_part_list(cls, new_part_num: int):
+		# Getting our part list regarding the interest file
+		downloading_part_list = LocalData.get_downloading_part_list()
+
+		# Calc the index of the list that must be updated
+		byte_index = int(math.floor(new_part_num / 8))
+		# Calc the position of the bit to toggle
+		bit_index = new_part_num % 8
+		# Update our part list
+		downloading_part_list[byte_index] |= pow(2, 7 - bit_index)
+		cls.set_downloading_part_list(downloading_part_list)
+
+	@classmethod
 	def set_num_parts_owned(cls, num_parts_owned: int) -> None:
 		cls.num_parts_owned = num_parts_owned
 
 	@classmethod
 	def get_num_parts_owned(cls) -> int:
 		return cls.num_parts_owned
-	# ---------------------------------------------------------------------------------
+
+	@classmethod
+	def __get_owned_parts(cls) -> list:
+		# Getting our part list regarding the interest file
+		# Every element of the list is: ((owner_ip4, owner_ip6, owner_port), part_list))
+		downloading_part_list = cls.get_downloading_part_list()
+		downloading_part_list_length = len(downloading_part_list)
+
+		# Create a list containing our owned parts regarding the interest file
+		owned_parts = list()
+
+		for byte_index in range(downloading_part_list_length):
+			for bit_index in range(8):
+				bit_mask = pow(2, 7 - bit_index)
+				ris = downloading_part_list[byte_index] & bit_mask
+				if ris != 0:
+					owned_parts.append(byte_index * 8 + bit_index)
+
+		return owned_parts
+
+	@classmethod
+	def get_downloadable_parts(cls) -> list:
+		# Getting all the available part lists in the network
+		# Every element of the list is: ((owner_ip4, owner_ip6, owner_port), part_list))
+		part_list_table = cls.get_part_list_table()
+
+		# Getting our part list regarding the interest file
+		downloading_part_list = cls.get_downloading_part_list()
+		part_list_length = len(downloading_part_list)
+
+		# Creating a list of couple: (num_part, sum)
+		occurrency_list = list()
+
+		for byte_index in range(part_list_length):
+			for bit_index in range(8):
+				sum = 0
+				for part_list_tuple in part_list_table:
+					part_list = part_list_tuple[1]
+					if part_list[byte_index] & pow(2, 7 - bit_index) != 0:
+						sum += 1
+				occurrency_list.append(((byte_index * 8) + bit_index, sum))
+		# Sorting the list according to the sum portion of every couple
+		occurrency_list.sort(key=lambda tup: tup[1])
+
+		# Getting the list of owned parts regarding the interest file
+		owned_parts = cls.__get_owned_parts()
+
+		# Create the final list, who will contain only the downloadable parts
+		downloadable_parts = list()
+
+		for occurrency_row in occurrency_list:
+			if occurrency_row[1] == 0:
+				# The the part hasn't owners
+				continue
+			if occurrency_row[0] in owned_parts:
+				# We already have the part
+				continue
+			downloadable_parts.append(occurrency_row[0])
+
+		return downloadable_parts
+
+	@classmethod
+	def get_owner_by_part(cls, part_num: int) -> tuple:
+		# Getting all the available part lists in the network.
+		# Every element of the list is: ((owner_ip4, owner_ip6, owner_port), part_list))
+		part_list_table = LocalData.get_part_list_table()
+
+		# Create a list containing the owners of the given part_number
+		owners = list()
+
+		byte_index = int(math.floor(part_num / 8))
+		bit_mask = pow(2, 7 - (part_num % 8))
+
+		for part_list in part_list_table:
+			ris = part_list[1][byte_index] & bit_mask
+			if ris != 0:
+				owners.append(part_list[0])
+
+		return random.choice(owners)
+# ---------------------------------------------------------------------------------

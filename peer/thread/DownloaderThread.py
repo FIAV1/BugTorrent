@@ -6,8 +6,7 @@ import io
 from peer.LocalData import LocalData
 from utils import shell_colors
 from threading import Thread
-from peer.utils import progress_bar
-from utils import binary_utils
+from peer.thread import progress_bar
 
 
 class DownloaderThread(Thread):
@@ -21,6 +20,7 @@ class DownloaderThread(Thread):
 		self.f_obj = f_obj
 		self.part_num = part_num
 		self.total_file_parts = total_file_parts
+
 
 	def __create_socket(self) -> (socket.socket, int):
 		""" Create the active socket

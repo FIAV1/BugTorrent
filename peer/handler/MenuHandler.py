@@ -151,7 +151,7 @@ class MenuHandler:
 
 			# Until all the parts hasn't been downloaded
 			while choosed_file_parts != LocalData.get_num_parts_owned():
-				update_event.wait(70)
+				update_event.wait(2)
 				update_event.clear()
 
 				# Get the file parts we don't have yet
@@ -325,6 +325,13 @@ class MenuHandler:
 
 			else:
 				shell.print_red(f'\nReceived a packet with a wrong command from the socket: {command} -> {response}')
+
+		elif choice == 'SHAR':
+			for count, files in enumerate(LocalData.get_shared_files(), 1):
+				print(f'{count}] {LocalData.get_downloadable_file_name(file)}')
+
+		elif choice == 'TRAC':
+			print(f'{LocalData.get_tracker_ip4()}|{LocalData.get_tracker_ip6()} [{LocalData.get_tracker_port()}]')
 
 		else:
 			shell.print_yellow(f'\nInvalid input code: "{choice}".\nPlease retry.\n')

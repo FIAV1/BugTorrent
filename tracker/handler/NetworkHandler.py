@@ -376,6 +376,7 @@ class NetworkHandler(HandlerInterface):
 					num_part = int(math.ceil(len_file / len_part))
 					part_list_length = int(math.ceil(num_part / 8))
 
+					NetworkHandler.part_list_mutex.acquire()
 					part_list_rows = file_repository.get_all_part_lists_by_file_excluding_owner(conn, file_md5, session_id)
 					owner_part_list = file_repository.get_part_list_by_file_and_owner(conn, file_md5, session_id)
 					part_list_element_mask = 0
@@ -434,9 +435,11 @@ class NetworkHandler(HandlerInterface):
 
 				conn.commit()
 				conn.close()
+				NetworkHandler.part_list_mutex.release()
 			except database.Error as e:
 				conn.rollback()
 				conn.close()
+				NetworkHandler.part_list_mutex.release()
 				sd.close()
 				self.log.write_red(f'An error has occurred while trying to serve the request: {e}')
 				return

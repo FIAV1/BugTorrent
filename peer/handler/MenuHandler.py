@@ -149,6 +149,8 @@ class MenuHandler:
 			f_obj.close()
 			LocalData.set_num_parts_owned(0)
 			progress_bar.print_progress_bar(0, choosed_file_parts, prefix='Downloading:', suffix='Complete', length=50)
+			# Adding the file to the shared file list
+			LocalData.add_shared_file(choosed_file_md5, choosed_file_name)
 
 			# Until all the parts hasn't been downloaded
 			while choosed_file_parts != LocalData.get_num_parts_owned():
@@ -169,9 +171,6 @@ class MenuHandler:
 
 			updater_thread.stop()
 			shell.print_green('\nDownload completed.')
-
-			# Adding the file to the shared file list
-			LocalData.add_shared_file(choosed_file_md5, choosed_file_name)
 
 		elif choice == "ADDR":
 			# check if shared directory exist

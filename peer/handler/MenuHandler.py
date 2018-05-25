@@ -156,10 +156,10 @@ class MenuHandler:
 			while choosed_file_parts != LocalData.get_num_parts_owned():
 				update_event.wait(2)
 				update_event.clear()
-				# Get the file parts we don't have yet
-				downloadable_parts = LocalData.get_downloadable_parts()
 				# We can use a with statement to ensure threads are cleaned up promptly
 				with ThreadPoolExecutor(max_workers=10) as executor:
+					# Get the file parts we don't have yet
+					downloadable_parts = LocalData.get_downloadable_parts()
 					for part_num in downloadable_parts:
 						try:
 							owner = LocalData.get_owner_by_part(part_num)

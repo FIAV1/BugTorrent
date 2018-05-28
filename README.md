@@ -1,8 +1,34 @@
-# BugTorrent :warning: WIP :warning:
+# BugTorrent
 
 :books: Reti Peer To Peer - Università degli Studi di Ferrara :books:
 
 A peer-to-peer server based on BitTorrent's approach:
+
+> ### Smart Query flooding
+> **Parallel parts**
+>   * Focused on efficient fetching, not searching
+>   * Preventing free-loading
+>   * Divide large file into many pieces
+>   * Allows simultaneous downloading
+>
+> ### Peers
+>   * Peers login to a tracker in order to share and download a file
+>
+> ### Tracker
+>   * Handle connected peers, giving infos about the file and who got the parts peers are interested in
+>
+> ### Chunks
+>   * Solution to chunk request: random selection and rarest chunk first:
+>      ** Avoid starvation when some peers depart
+>      ** Avoid starvation across all peers wanting a file
+>      ** Balance load by equalizing # of copies of chunks
+>
+> ### Free-riding
+>   * Vast majority of users are free-riders (download and leave the system / limited bandwidth); solution:
+>      ** Peer has limited upload bandwidth and must share it among multiple peers
+>      ** Prioritizing the upload bandwidth
+>      ** A few "peers" essentially act as servers
+>      ** Allow the fastest peers to download from you and occasionally let some free loaders download
 
 ## Usage
 ```shell

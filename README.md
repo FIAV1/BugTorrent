@@ -5,7 +5,7 @@
 A peer-to-peer server based on BitTorrent's approach:
 
 > ### Smart Query flooding
-> **Parallel parts**
+> ### **Parallel parts**
 >   * Focused on efficient fetching, not searching
 >   * Preventing free-loading
 >   * Divide large file into many pieces

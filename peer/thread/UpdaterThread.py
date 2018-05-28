@@ -63,7 +63,7 @@ class UpdaterThread(Thread):
 
 				sock = self.__connect(tracker_ip4, tracker_ip6, tracker_port, packet)
 			except socket.error as e:
-				self.log.write_red(f'\nImpossible to send data to {self.host_ip4}|{self.host_ip6} [{self.host_port}]: {e}\n')
+				self.log.write_red(f'\nImpossible to send data to {tracker_ip4}|{tracker_ip6} [{tracker_port}]: {e}\n')
 				break
 
 			ack = sock.recv(4).decode()

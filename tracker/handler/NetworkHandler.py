@@ -10,9 +10,11 @@ from tracker.database import database
 from tracker.model.Peer import Peer
 from tracker.model.File import File
 from tracker.model import peer_repository, file_repository
+from threading import Lock
 
 
 class NetworkHandler(HandlerInterface):
+	part_list_mutex = Lock()
 
 	def __init__(self, db_file: str, log: Logger.Logger):
 		self.db_file = db_file
@@ -153,8 +155,11 @@ class NetworkHandler(HandlerInterface):
 
 					for i in range(part_list_length - 1):
 						part_list[i] = 255
-					for i in range(num_part % 8):
-						part_list[part_list_length - 1] |= pow(2, 7-i)
+					if num_part % 8 == 0:
+						part_list[part_list_length - 1] = 255
+					else:
+						for i in range(num_part % 8):
+							part_list[part_list_length - 1] |= pow(2, 7-i)
 
 					file_repository.add_owner(conn, md5, session_id, part_list, 1)
 				else:
@@ -289,10 +294,13 @@ class NetworkHandler(HandlerInterface):
 				self.log.write_red(f'Invalid packet received: {packet[52:60]} must be integer.')
 				return
 
+			# Start update part_list transaction
+			NetworkHandler.part_list_mutex.acquire()
 			try:
 				conn = database.get_connection(self.db_file)
 				conn.row_factory = database.sqlite3.Row
 			except database.Error as e:
+				NetworkHandler.part_list_mutex.release()
 				sd.close()
 				self.log.write_red(f'An error has occurred while trying to serve the request: {e}')
 				return
@@ -320,13 +328,15 @@ class NetworkHandler(HandlerInterface):
 				if new_part_list:
 					file_repository.add_owner(conn, file_md5, session_id, part_list, 0)
 				else:
-					file_repository.update_part_list_by_file_and_owner(conn, file_md5, session_id, part_list,)
+					file_repository.update_part_list_by_file_and_owner(conn, file_md5, session_id, part_list)
 
 				conn.commit()
 				conn.close()
+				NetworkHandler.part_list_mutex.release()
 			except database.Error as e:
 				conn.rollback()
 				conn.close()
+				NetworkHandler.part_list_mutex.release()
 				sd.close()
 				self.log.write_red(f'An error has occurred while trying to serve the request: {e}')
 				return
@@ -358,6 +368,7 @@ class NetworkHandler(HandlerInterface):
 			try:
 				peer = self.check_peer_authentication(conn, session_id, sd)
 
+				NetworkHandler.part_list_mutex.acquire()
 				# logout permission check
 				peer_files = file_repository.get_peer_files(conn, session_id, 1)
 
@@ -368,7 +379,6 @@ class NetworkHandler(HandlerInterface):
 
 					num_part = int(math.ceil(len_file / len_part))
 					part_list_length = int(math.ceil(num_part / 8))
-
 					part_list_rows = file_repository.get_all_part_lists_by_file_excluding_owner(conn, file_md5, session_id)
 					owner_part_list = file_repository.get_part_list_by_file_and_owner(conn, file_md5, session_id)
 					part_list_element_mask = 0
@@ -427,9 +437,11 @@ class NetworkHandler(HandlerInterface):
 
 				conn.commit()
 				conn.close()
+				NetworkHandler.part_list_mutex.release()
 			except database.Error as e:
 				conn.rollback()
 				conn.close()
+				NetworkHandler.part_list_mutex.release()
 				sd.close()
 				self.log.write_red(f'An error has occurred while trying to serve the request: {e}')
 				return

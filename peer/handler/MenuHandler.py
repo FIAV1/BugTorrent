@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
-from peer.utils.DownloaderThread import DownloaderThread
+from peer.thread import download_task
 import os
-from utils import net_utils, binary_utils, hasher, Logger, shell_colors as shell
-from peer.utils import UpdaterThread
+from utils import net_utils, hasher, Logger, shell_colors as shell
+from peer.thread import UpdaterThread
 from peer.LocalData import LocalData
 import math
 from threading import Event
-from peer.utils import progress_bar
+from peer.thread import progress_bar
+from concurrent.futures import ThreadPoolExecutor
 
 
 class MenuHandler:
@@ -148,38 +149,27 @@ class MenuHandler:
 			f_obj.close()
 			LocalData.set_num_parts_owned(0)
 			progress_bar.print_progress_bar(0, choosed_file_parts, prefix='Downloading:', suffix='Complete', length=50)
+			# Adding the file to the shared file list
+			LocalData.add_shared_file(choosed_file_md5, choosed_file_name)
 
 			# Until all the parts hasn't been downloaded
 			while choosed_file_parts != LocalData.get_num_parts_owned():
 				update_event.wait(2)
 				update_event.clear()
-
-				# Get the file parts we don't have yet
-				downloadable_parts = binary_utils.get_downloadable_parts()
-
-				# Start a DownloaderThread for each parts to download
-				downloader_threads = list()
-				for part_num in downloadable_parts:
-					try:
-						if len(downloader_threads) < 16:
-							f_obj = open(f'shared/{choosed_file_name}', 'r+b')
-							f_obj.seek(part_num * choosed_file_part_lenght)
-							owner = binary_utils.get_owner_by_part(part_num)
-							downloader = DownloaderThread(owner, choosed_file_md5, f_obj, part_num, choosed_file_parts)
-							downloader.start()
-							downloader_threads.append(downloader)
-
-					except OSError:
-						shell.print_red(f'\nError while downloading {choosed_file_name}.\n')
-
-				for downloader in downloader_threads:
-					downloader.join()
+				# We can use a with statement to ensure threads are cleaned up promptly
+				with ThreadPoolExecutor(max_workers=10) as executor:
+					# Get the file parts we don't have yet
+					downloadable_parts = LocalData.get_downloadable_parts()
+					for part_num in downloadable_parts:
+						try:
+							# Start the load operations
+							executor.submit(download_task.run, choosed_file_md5, choosed_file_name, part_num, choosed_file_part_lenght, choosed_file_parts, log)
+						except OSError as e:
+							log.write_red(f'\nError while downloading {choosed_file_name}: {e}')
+					executor.shutdown()
 
 			updater_thread.stop()
 			shell.print_green('\nDownload completed.')
-
-			# Adding the file to the shared file list
-			LocalData.add_shared_file(choosed_file_md5, choosed_file_name)
 
 		elif choice == "ADDR":
 			# check if shared directory exist
@@ -316,7 +306,6 @@ class MenuHandler:
 				part_own = int(response[4:14])
 				shell.print_green('\nSuccessfully logged out')
 				shell.print_blue(f'{part_own} parts has been removed from sharing.\n')
-				LocalData.clear_shared_files()
 				LocalData.clear_tracker()
 
 			elif command == "NLOG":

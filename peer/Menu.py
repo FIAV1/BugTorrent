@@ -5,7 +5,7 @@ from utils import shell_colors
 from peer.LocalData import LocalData
 from common.ServerThread import ServerThread
 from threading import Timer
-from peer.utils.SpinnerThread import SpinnerThread
+from peer.thread.SpinnerThread import SpinnerThread
 
 
 class Menu:
@@ -63,5 +63,6 @@ class Menu:
 
 		timer.join()
 		spinner.join()
+		LocalData.clear_shared_files()
 
 		shell_colors.print_blue('\nYou leaved the Network\nBye!\n')

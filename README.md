@@ -19,16 +19,16 @@ A peer-to-peer server based on BitTorrent's approach:
 >
 > ### Chunks
 >   * Solution to chunk request: random selection and rarest chunk first:
->      ** Avoid starvation when some peers depart
->      ** Avoid starvation across all peers wanting a file
->      ** Balance load by equalizing # of copies of chunks
+>      * Avoid starvation when some peers depart
+>      * Avoid starvation across all peers wanting a file
+>      * Balance load by equalizing # of copies of chunks
 >
 > ### Free-riding
 >   * Vast majority of users are free-riders (download and leave the system / limited bandwidth); solution:
->      ** Peer has limited upload bandwidth and must share it among multiple peers
->      ** Prioritizing the upload bandwidth
->      ** A few "peers" essentially act as servers
->      ** Allow the fastest peers to download from you and occasionally let some free loaders download
+>      * Peer has limited upload bandwidth and must share it among multiple peers
+>      * Prioritizing the upload bandwidth
+>      * A few "peers" essentially act as servers
+>      * Allow the fastest peers to download from you and occasionally let some free loaders download
 
 ## Usage
 ```shell

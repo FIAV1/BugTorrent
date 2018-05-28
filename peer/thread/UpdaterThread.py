@@ -90,7 +90,17 @@ class UpdaterThread(Thread):
 			self.log.write_yellow(f'{self.file_md5} ', end='')
 			self.log.write(f'updated: ', end='')
 			self.log.write_green(f'{len(part_list_table)} ', end='')
-			self.log.write(f'sources added.')
+			self.log.write(f'sources added:')
+			for source in part_list_table:
+				self.log.write_blue(f'{source[0][0]}|{source[0][1]} [{source[0][2]}]')
+			self.log.write('')
+
+			LocalData.update_downloadable_parts()
+			self.log.write_blue(f'Downloadable parts:')
+			for part_num in LocalData.get_downloadable_parts():
+				self.log.write(f'{str(part_num)}, ', end='')
+			self.log.write('')
+
 			self.update_event.set()
 
 			time.sleep(60)

@@ -368,6 +368,7 @@ class NetworkHandler(HandlerInterface):
 			try:
 				peer = self.check_peer_authentication(conn, session_id, sd)
 
+				NetworkHandler.part_list_mutex.acquire()
 				# logout permission check
 				peer_files = file_repository.get_peer_files(conn, session_id, 1)
 
@@ -378,8 +379,6 @@ class NetworkHandler(HandlerInterface):
 
 					num_part = int(math.ceil(len_file / len_part))
 					part_list_length = int(math.ceil(num_part / 8))
-
-					NetworkHandler.part_list_mutex.acquire()
 					part_list_rows = file_repository.get_all_part_lists_by_file_excluding_owner(conn, file_md5, session_id)
 					owner_part_list = file_repository.get_part_list_by_file_and_owner(conn, file_md5, session_id)
 					part_list_element_mask = 0

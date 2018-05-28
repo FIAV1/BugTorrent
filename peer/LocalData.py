@@ -19,6 +19,9 @@ class LocalData:
 	# [(owner_ipv4', 'owner_ipv6', 'owner_port'), 'part_list_i']
 	part_list_table = list()
 
+	# (part_num)
+	downloadable_parts = list()
+
 	# bytearray containing the part list regarding the file under download
 	downloading_part_list = bytearray()
 
@@ -186,7 +189,7 @@ class LocalData:
 		return owned_parts
 
 	@classmethod
-	def get_downloadable_parts(cls) -> list:
+	def update_downloadable_parts(cls) -> list:
 		# Getting all the available part lists in the network
 		# Every element of the list is: ((owner_ip4, owner_ip6, owner_port), part_list))
 		part_list_table = cls.get_part_list_table()
@@ -224,7 +227,11 @@ class LocalData:
 				continue
 			downloadable_parts.append(occurrency_row[0])
 
-		return downloadable_parts
+		cls.downloadable_parts = downloadable_parts
+
+	@classmethod
+	def get_downloadable_parts(cls) -> list:
+		return cls.downloadable_parts
 
 	@classmethod
 	def get_owner_by_part(cls, part_num: int) -> tuple:

@@ -2,11 +2,9 @@
 
 import socket
 import random
-import io
 from peer.LocalData import LocalData
-from utils import shell_colors
+from utils import Logger
 from peer.thread import progress_bar
-from utils import binary_utils
 
 
 def __create_socket() -> (socket.socket, int):
@@ -44,8 +42,9 @@ def __connect(ip4_peer: str, ip6_peer: str, port_peer: int, packet: str) -> sock
 	return sock
 
 
-def run(owner: tuple, file_md5: str, file_name: str, part_num: int, part_length: int, total_file_parts: int):
+def run(file_md5: str, file_name: str, part_num: int, part_length: int, total_file_parts: int, log: Logger.Logger):
 
+	owner = LocalData.get_owner_by_part(part_num)
 	owner_ip4 = owner[0]
 	owner_ip6 = owner[1]
 	owner_port = int(owner[2])
@@ -55,19 +54,19 @@ def run(owner: tuple, file_md5: str, file_name: str, part_num: int, part_length:
 
 		sock = __connect(owner_ip4, owner_ip6, owner_port, packet)
 	except socket.error as e:
-		shell_colors.print_red(f'\nImpossible to send data to {owner_ip4}|{owner_ip6} [{owner_port}]: {e}\n')
+		log.write_red(f'\nImpossible to send data to {owner_ip4}|{owner_ip6} [{owner_port}]: {e}\n')
 		return
 
 	ack = sock.recv(4).decode()
 	if ack != "AREP":
-		shell_colors.print_red(f'Invalid command received: {ack}. Expected: AREP')
+		log.write_red(f'Invalid command received: {ack}. Expected: AREP')
 		sock.close()
 		return
 
 	try:
 		total_chunks = int(sock.recv(6).decode())
 	except ValueError:
-		shell_colors.print_red('Impossible to retrieve the part. Trying later.')
+		log.write_red('Impossible to retrieve the part. Trying later.')
 		return
 
 	f_obj = open(f'shared/{file_name}', 'r+b')
@@ -93,19 +92,19 @@ def run(owner: tuple, file_md5: str, file_name: str, part_num: int, part_length:
 
 		sock = __connect(LocalData.get_tracker_ip4(), LocalData.get_tracker_ip6(), LocalData.get_tracker_port(), packet)
 	except socket.error as e:
-		shell_colors.print_red(f'\nImpossible to send data to {owner_ip4}|{owner_ip6} [{owner_port}]: {e}\n')
+		log.write_red(f'\nImpossible to send data to {owner_ip4}|{owner_ip6} [{owner_port}]: {e}\n')
 		return
 
 	ack = sock.recv(4).decode()
 	if ack != "APAD":
-		shell_colors.print_red(f'\nInvalid command received: {ack}. Expected: APAD\n')
+		log.write_red(f'\nInvalid command received: {ack}. Expected: APAD\n')
 		sock.close()
 		return
 
 	try:
 		num_parts_owned = int(sock.recv(8).decode())
 	except ValueError:
-		shell_colors.print_red('Error while retrieving the parts owned from the tracker.')
+		log.write_red('Error while retrieving the parts owned from the tracker.')
 		return
 
 	LocalData.update_downloading_part_list(part_num)

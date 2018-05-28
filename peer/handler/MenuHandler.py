@@ -162,11 +162,10 @@ class MenuHandler:
 					downloadable_parts = LocalData.get_downloadable_parts()
 					for part_num in downloadable_parts:
 						try:
-							owner = LocalData.get_owner_by_part(part_num)
 							# Start the load operations
-							executor.submit(download_task.run, owner, choosed_file_md5, choosed_file_name, part_num, choosed_file_part_lenght, choosed_file_parts)
+							executor.submit(download_task.run, choosed_file_md5, choosed_file_name, part_num, choosed_file_part_lenght, choosed_file_parts, log)
 						except OSError as e:
-							shell.print_red(f'\nError while downloading {choosed_file_name}: {e}\n')
+							log.write_red(f'\nError while downloading {choosed_file_name}: {e}')
 					executor.shutdown()
 
 			updater_thread.stop()

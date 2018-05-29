@@ -154,7 +154,7 @@ class MenuHandler:
 
 			# Until all the parts hasn't been downloaded
 			while choosed_file_parts != LocalData.get_num_parts_owned():
-				update_event.wait(2)
+				update_event.wait(70)
 				update_event.clear()
 				# We can use a with statement to ensure threads are cleaned up promptly
 				with ThreadPoolExecutor(max_workers=10) as executor:

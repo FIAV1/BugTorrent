@@ -18,7 +18,32 @@ class MenuHandler:
 		"""
 
 		if choice == "LISTFILES":
-			pass
+			try:
+				conn = database.get_connection(self.db_file)
+				conn.row_factory = database.sqlite3.Row
+
+			except database.Error as e:
+				print(f'Error: {e}')
+				print('The server has encountered an error while trying to serve the request.')
+				return
+
+			try:
+				files = file_repository.find_all(conn)
+
+				shell.print_green('\nLogged peers files:')
+				if not files:
+					shell.print_red('There are not logged peers files.')
+
+				for count, shared_file in enumerate(files, 1):
+					print(f'{count}] {shared_file["file_name"]} ', end='')
+					shell.print_yellow(f'{shared_file["file_md5"]}\n')
+
+			except database.Error as e:
+				conn.rollback()
+				conn.close()
+				print(f'Error: {e}')
+				print('The server has encountered an error while trying to serve the request.')
+				return
 
 		elif choice == "SHOWPARTS":
 
@@ -59,16 +84,18 @@ class MenuHandler:
 
 					chosen_peer = peer_list.pop(index)
 
-					part_list = file_repository.get_peer_part_lists(conn, chosen_peer['session_id'])
+					part_lists_rows = file_repository.get_peer_part_lists(conn, chosen_peer['session_id'])
 
-					if not part_list:
+					if not part_lists_rows:
 						shell.print_red('This peer has no file\'s parts')
 						conn.close()
 						return
 					else:
 						shell.print_green('\nList of parts:')
-						for count, part_list_row in enumerate(part_list, 1):
-							shell.print_blue(f'{count}]' +  '\n')
+						for part_list_row in part_lists_rows:
+							part_list = bytearray(part_list_row['part_list'])
+							for count, part in enumerate(part_list, 1):
+								shell.print_blue(f'{count}]' + bin(part_list[part])[2:].zfill(8) + '\nb')
 
 		elif choice == "LISTPEERS":
 			try:

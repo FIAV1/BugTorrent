@@ -35,9 +35,9 @@ def find_all(conn: database.sqlite3.Connection) -> list():
 
 
 def find_by_ip(conn: database.sqlite3.Connection, ip: str) -> 'Peer':
-	""" Retrieve the peer with the given session_id
+	""" Retrieve the peer with the given ip
 	:param conn - the db connection
-	:param session_id - session id for a peer
+	:param ip - ip for a peer
 	:return peer - first matching result for the research
 	"""
 	c = conn.cursor()

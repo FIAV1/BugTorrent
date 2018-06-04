@@ -316,11 +316,16 @@ class MenuHandler:
 				shell.print_red(f'\nReceived a packet with a wrong command from the socket: {command} -> {response}')
 
 		elif choice == 'SHAR':
-			for count, files in enumerate(LocalData.get_shared_files(), 1):
+			files = LocalData.get_shared_files()
+			if not files:
+				shell.print_red('\nYou currently have no files in sharing.')
+
+			print('\nFiles actually in sharing:')
+			for count, file in enumerate(files, 1):
 				print(f'{count}] {LocalData.get_downloadable_file_name(file)}')
 
 		elif choice == 'TRAC':
-			print(f'{LocalData.get_tracker_ip4()}|{LocalData.get_tracker_ip6()} [{LocalData.get_tracker_port()}]')
+			shell.print_green(f'\nYour tracker is: {LocalData.get_tracker_ip4()}|{LocalData.get_tracker_ip6()} [{LocalData.get_tracker_port()}]')
 
 		else:
 			shell.print_yellow(f'\nInvalid input code: "{choice}".\nPlease retry.\n')

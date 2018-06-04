@@ -17,20 +17,20 @@ class Menu:
 
 		choice = ''
 		while choice != 'q':
-			print('\n- Main Menù ----------------------------')
+			print('\n- Main Menù ------------------------------')
 			print('| <1> List files                         |')
-			print('| <2> List peer\'s file parts            |')
+			print('| <2> List peer\'s file parts             |')
 			print('| <3> List logged peers                  |')
 			print('------------------------------------------')
 			choice = input('Select an option (q to exit): ')
 
 			if choice in {'1', '2', '3'}:
 				if choice == '1':
-					command = ""
+					command = "LISTFILES"
 				elif choice == '2':
-					command = ""
+					command = "SHOWPARTS"
 				elif choice == '3':
-					command = ""
+					command = "LISTPEERS"
 
 				self.handler.serve(command)
 			elif choice != 'q':

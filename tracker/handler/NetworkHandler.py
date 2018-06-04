@@ -370,7 +370,7 @@ class NetworkHandler(HandlerInterface):
 
 				NetworkHandler.part_list_mutex.acquire()
 				# logout permission check
-				peer_files = file_repository.get_peer_files(conn, session_id, 1)
+				peer_files = file_repository.get_peer_owned_files(conn, session_id)
 
 				for file_row in peer_files:
 					file_md5 = file_row['file_md5']

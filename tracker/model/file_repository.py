@@ -34,7 +34,7 @@ def find_all(conn: database.sqlite3.Connection) -> list:
 	return files_rows
 
 
-def get_peer_files(conn: database.sqlite3.Connection, session_id: str, source: int) -> list:
+def get_peer_owned_files(conn: database.sqlite3.Connection, session_id: str) -> list:
 	""" Get all the files owned by the given peer
 	:param conn - the db connection
 	:param session_id - the session_id of the peer
@@ -45,8 +45,27 @@ def get_peer_files(conn: database.sqlite3.Connection, session_id: str, source: i
 	c.execute(
 		'SELECT f.* '
 		'FROM files AS f NATURAL JOIN files_peers AS f_p '
-		'WHERE f_p.session_id=? AND f_p.source=?',
-		(session_id, source)
+		'WHERE f_p.session_id=? AND f_p.source=1',
+		(session_id,)
+	)
+	files_rows = c.fetchall()
+
+	return files_rows
+
+
+def get_all_peer_files(conn: database.sqlite3.Connection, session_id: str) -> list:
+	""" Get all the files owned by the given peer
+	:param conn - the db connection
+	:param session_id - the session_id of the peer
+	:param source - 1 if we are interest only to files added originally by the peer, 0 if we are interest only to files downloaded by the peer
+	:return list - the list of files
+	"""
+	c = conn.cursor()
+	c.execute(
+		'SELECT f.* '
+		'FROM files AS f NATURAL JOIN files_peers AS f_p '
+		'WHERE f_p.session_id=?',
+		(session_id,)
 	)
 	files_rows = c.fetchall()
 

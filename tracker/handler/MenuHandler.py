@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-from utils import net_utils, hasher, shell_colors as shell
+from utils import shell_colors as shell
 from tracker.database import database
 from tracker.model import file_repository, peer_repository
+import math
 
 
 class MenuHandler:
@@ -59,7 +60,7 @@ class MenuHandler:
 			peer_list = peer_repository.find_all(conn)
 
 			if not peer_list:
-				shell.print_red('There are not logged peers.')
+				shell.print_red('There are no logged peers.')
 				conn.close()
 				return
 			else:
@@ -84,18 +85,31 @@ class MenuHandler:
 
 					chosen_peer = peer_list.pop(index)
 
-					part_lists_rows = file_repository.get_peer_part_lists(conn, chosen_peer['session_id'])
+					peer_session_id = chosen_peer['session_id']
 
-					if not part_lists_rows:
+					file_rows = file_repository.get_all_peer_files(conn, peer_session_id)
+
+					if not file_rows:
 						shell.print_red('This peer has no file\'s parts')
 						conn.close()
 						return
-					else:
-						shell.print_green('\nList of parts:')
-						for part_list_row in part_lists_rows:
-							part_list = bytearray(part_list_row['part_list'])
-							for count, part in enumerate(part_list, 1):
-								shell.print_blue(f'{count}]' + bin(part_list[part])[2:].zfill(8) + '\nb')
+
+					for count, file_row in enumerate(file_rows, 1):
+						file_name = file_row['file_name']
+						file_md5 = file_row['file_md5']
+
+						part_list = bytearray(file_repository.get_part_list_by_file_and_owner(conn, file_md5, peer_session_id))
+
+						print(f'{count}] ', end='')
+						shell.print_blue(f'{file_name}|{file_md5} -> ', end='')
+
+						for byte_index in range(len(part_list)):
+							print(f'{bin(part_list[byte_index])[2:]} ', end='')
+						print('')
+					return()
+				else:
+					shell.print_red(f'\nWrong index: number in range 1 - {len(peer_list)} expected.')
+					continue
 
 		elif choice == "LISTPEERS":
 			try:

@@ -104,7 +104,7 @@ class MenuHandler:
 						shell.print_blue(f'{file_name}|{file_md5} -> ', end='')
 
 						for byte_index in range(len(part_list)):
-							print(f'{bin(part_list[byte_index])[2:]} ', end='')
+							print(f'{bin(part_list[byte_index])[2:].zfill(8)} ', end='')
 						print('')
 					return()
 				else:

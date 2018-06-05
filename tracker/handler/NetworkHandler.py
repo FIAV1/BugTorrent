@@ -368,7 +368,6 @@ class NetworkHandler(HandlerInterface):
 			try:
 				peer = self.check_peer_authentication(conn, session_id, sd)
 
-				NetworkHandler.part_list_mutex.acquire()
 				# logout permission check
 				peer_files = file_repository.get_peer_owned_files(conn, session_id)
 
@@ -437,11 +436,9 @@ class NetworkHandler(HandlerInterface):
 
 				conn.commit()
 				conn.close()
-				NetworkHandler.part_list_mutex.release()
 			except database.Error as e:
 				conn.rollback()
 				conn.close()
-				NetworkHandler.part_list_mutex.release()
 				sd.close()
 				self.log.write_red(f'An error has occurred while trying to serve the request: {e}')
 				return
